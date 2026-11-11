@@ -1,0 +1,24 @@
+# ONGO prototype
+
+Clickable web prototype of the ONGO on-demand car wash app, built from the Figma consumer design (54 screens).
+
+**Stack:** Vite 8 · React 19 · TypeScript · Tailwind CSS v4 · Motion · React Router
+
+## Run
+
+```bash
+npm install
+npm run dev
+```
+
+On desktop the app renders inside an iPhone frame with a side panel to jump to any screen and toggle demo states (empty garage, no cards, payment failure, no washer available). On a phone it runs full-screen.
+
+## Flows
+
+- Onboarding: sign in, price preview, phone + country, OTP, car details, welcome
+- Booking: draggable map, location search, service selection, add-ons, scheduling, payment
+- Tracking: washer search, live timeline, cancel, rating and feedback
+- Account: garage, profile, settings, notifications, payment methods
+- Empty, error and confirmation states
+
+Design tokens in `src/index.css` mirror the Figma Theme and Sizes variables. State persists to `localStorage`; use "Reset demo" to start over.
