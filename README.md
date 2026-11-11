@@ -22,3 +22,9 @@ On desktop the app renders inside an iPhone frame with a side panel to jump to a
 - Empty, error and confirmation states
 
 Design tokens in `src/index.css` mirror the Figma Theme and Sizes variables. State persists to `localStorage`; use "Reset demo" to start over.
+
+## Live demo
+
+https://wdesign-hub.github.io/ongo-prototype/
+
+Redeploy after changes: `npm run deploy` (builds and publishes `dist` to the `gh-pages` branch; needs `gh auth login`).
