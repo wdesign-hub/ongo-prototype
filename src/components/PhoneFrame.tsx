@@ -1,6 +1,13 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { useLocation, useNavigate } from 'react-router'
-import { useStore } from '../lib/store'
+import { Monitor, Moon, Sun } from 'lucide-react'
+import { useStore, type PaymentMethod } from '../lib/store'
+
+const DEMO_PAYMENTS: PaymentMethod[] = [
+  { id: 'p1', brand: 'mastercard', label: 'Mastercard', last4: '2210', bank: 'CBQ' },
+  { id: 'p2', brand: 'visa', label: 'NAPS debit', last4: '4408' },
+  { id: 'p3', brand: 'applepay', label: 'Apple Pay' },
+]
 
 const FrameCtx = createContext({ framed: false })
 export const useFrame = () => useContext(FrameCtx)
@@ -36,16 +43,16 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
   if (!desktop) {
     return (
       <FrameCtx.Provider value={{ framed: false }}>
-        <div className="fixed inset-0 overflow-hidden bg-white">{children}</div>
+        <div className="fixed inset-0 overflow-hidden bg-bg">{children}</div>
       </FrameCtx.Provider>
     )
   }
 
   const toggle = (label: string, on: boolean, fn: () => void) => (
-    <button onClick={fn} className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-left text-[13px] text-ink/80 hover:bg-black/[0.04]">
+    <button onClick={fn} className="flex w-full items-center justify-between rounded-sm px-2 py-1.5 text-left text-[13px] text-ink/80 hover:bg-ink/[0.05]">
       {label}
       <span className={`relative h-[18px] w-[30px] rounded-full transition-colors ${on ? 'bg-brand' : 'bg-line'}`}>
-        <span className={`absolute top-[2px] size-[14px] rounded-full bg-white shadow transition-[left] ${on ? 'left-[14px]' : 'left-[2px]'}`} />
+        <span className={`absolute top-[2px] size-[14px] rounded-full bg-[#fff] shadow transition-[left] ${on ? 'left-[14px]' : 'left-[2px]'}`} />
       </span>
     </button>
   )
@@ -58,6 +65,23 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
             <p className="text-[15px] font-bold">ONGO prototype</p>
             <p className="mt-1 text-[13px] leading-snug text-muted">Built from the Figma consumer file. Click through the phone, or jump to any screen.</p>
           </div>
+          <div className="flex flex-col gap-2">
+            <p className="px-2 text-[11px] font-semibold uppercase tracking-wider text-muted">Appearance</p>
+            <div role="radiogroup" aria-label="Appearance" className="flex rounded-md bg-ink/[0.06] p-1">
+              {(['system', 'light', 'dark'] as const).map((t) => (
+                <button
+                  key={t}
+                  role="radio"
+                  aria-checked={state.theme === t}
+                  onClick={() => set({ theme: t })}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-sm py-1.5 text-[13px] capitalize transition-colors ${state.theme === t ? 'bg-bg font-semibold shadow-sm' : 'text-ink/70 hover:text-ink'}`}
+                >
+                  {t === 'system' ? <Monitor size={13} strokeWidth={2} /> : t === 'light' ? <Sun size={13} strokeWidth={2} /> : <Moon size={13} strokeWidth={2} />}
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
           {INDEX.map((g) => (
             <div key={g.group} className="flex flex-col gap-0.5">
               <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted">{g.group}</p>
@@ -65,7 +89,7 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
                 <button
                   key={to}
                   onClick={() => navigate(to)}
-                  className={`rounded-sm px-2 py-1.5 text-left text-[13px] transition-colors ${pathname === to ? 'bg-white font-semibold shadow-sm' : 'text-ink/80 hover:bg-black/[0.04]'}`}
+                  className={`rounded-sm px-2 py-1.5 text-left text-[13px] transition-colors ${pathname === to ? 'bg-bg font-semibold shadow-sm' : 'text-ink/80 hover:bg-ink/[0.05]'}`}
                 >
                   {label}
                 </button>
@@ -75,11 +99,13 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
           <div className="flex flex-col gap-0.5">
             <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted">Demo data</p>
             {toggle('Has vehicles', state.cars.length > 0, () => set((s) => ({ cars: s.cars.length ? [] : [{ id: 'c1', name: 'Lamborghini Jr.', plate: '000000', color: 'White', type: 'Sedan' }], primaryCarId: s.cars.length ? null : 'c1' })))}
-            {toggle('Has payment card', state.payments.length > 0, () => set((s) => ({ payments: s.payments.length ? [] : [{ id: 'p1', brand: 'mastercard', label: 'Mastercard', last4: '2210', bank: 'CBQ' }], primaryPaymentId: s.payments.length ? null : 'p1' })))}
+            {toggle('Has payment methods', state.payments.length > 0, () => set((s) => ({ payments: s.payments.length ? [] : DEMO_PAYMENTS, primaryPaymentId: s.payments.length ? null : 'p1' })))}
             {toggle('Has recent bookings', state.recent.length > 0, () => set((s) => ({ recent: s.recent.length ? [] : [{ id: 'r1', service: 'express' }, { id: 'r2', service: 'shine' }, { id: 'r3', service: 'express' }] })))}
-            {toggle('Has notifications', state.showNotifications, () => set((s) => ({ showNotifications: !s.showNotifications })))}
+            {toggle('Has notifications', state.showNotifications, () => set((s) => ({ showNotifications: !s.showNotifications, dismissedNotifications: [] })))}
             {toggle('Next payment fails', state.failPayment, () => set((s) => ({ failPayment: !s.failPayment })))}
             {toggle('No washer available', state.noWasher, () => set((s) => ({ noWasher: !s.noWasher })))}
+            {toggle('Wrong OTP code', state.wrongOtp, () => set((s) => ({ wrongOtp: !s.wrongOtp })))}
+            {toggle('Location services off', state.locationOff, () => set((s) => ({ locationOff: !s.locationOff })))}
             <button onClick={() => { reset(); navigate('/') }} className="mt-2 rounded-sm px-2 py-1.5 text-left text-[13px] text-danger hover:bg-danger-subtle">
               Reset demo
             </button>
@@ -87,12 +113,12 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
         </aside>
 
         <div className="relative shrink-0 rounded-[56px] bg-[#0b0d0e] p-[10px] shadow-[0_40px_80px_-20px_rgba(11,13,14,0.35),0_0_0_1px_rgba(255,255,255,0.08)_inset]">
-          <div className="relative h-[844px] w-[390px] overflow-hidden rounded-[46px] bg-white [transform:translateZ(0)]">
+          <div className="relative h-[844px] w-[390px] overflow-hidden rounded-[46px] bg-bg [transform:translateZ(0)]">
             {children}
             {/* Dynamic Island */}
             <div className="pointer-events-none absolute left-1/2 top-[11px] z-[60] h-[34px] w-[124px] -translate-x-1/2 rounded-full bg-black" />
             {/* Home indicator */}
-            <div className="pointer-events-none absolute bottom-2 left-1/2 z-[60] h-[5px] w-[140px] -translate-x-1/2 rounded-full bg-white mix-blend-difference" />
+            <div className="pointer-events-none absolute bottom-2 left-1/2 z-[60] h-[5px] w-[140px] -translate-x-1/2 rounded-full bg-bg mix-blend-difference" />
           </div>
         </div>
       </div>

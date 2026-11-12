@@ -3,11 +3,11 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useNavigate } from 'react-router'
 import { Bell, CarFront, ChevronDown, CircleCheck, ListTodo, MapPin, Search, Warehouse } from 'lucide-react'
 import { useStore } from '../lib/store'
-import { serviceById } from '../lib/data'
-import { Badge, BottomNav, Button, EmptyState, InfoCard, Screen, Scroll, StatusBar } from '../components/ui'
+import { Badge, BottomNav, Button, EmptyState, InfoCard, Screen, Scroll, StatusBar, ThemedImg } from '../components/ui'
 import { ServicePreview } from '../components/ServicePreview'
 import { CarTypeSheet } from '../components/Sheets'
 import symbol from '../assets/icons/ongo-symbol.svg'
+import symbolWhite from '../assets/icons/ongo-symbol-white.svg'
 import illCalendar from '../assets/img/ill-calendar.png'
 
 export function HomeHeader() {
@@ -17,11 +17,11 @@ export function HomeHeader() {
   const type = primaryCar?.type ?? 'Sedan'
   return (
     <>
-      <div className="shrink-0 bg-white px-6 py-1">
+      <div className="shrink-0 bg-bg px-6 py-1">
         <div className="flex h-14 items-center justify-between">
           <div className="flex items-center gap-2">
-            <img src={symbol} alt="ONGO" width={33} height={32} />
-            <button onClick={() => setOpen(true)} className="flex h-8 items-center gap-2 rounded-sm bg-bg-2 px-3 font-bold transition-[background-color,transform] duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-line">
+            <ThemedImg light={symbol} dark={symbolWhite} alt="ONGO" width={33} height={32} />
+            <button onClick={() => (state.cars.length ? setOpen(true) : navigate('/garage/new'))} className="flex h-8 items-center gap-2 rounded-sm bg-bg-2 px-3 font-bold transition-[background-color,transform] duration-150 active:scale-[0.97] [@media(hover:hover)]:hover:bg-line">
               <CarFront size={16} strokeWidth={2} />
               {type.startsWith('SUV') ? 'SUV' : type}
               <ChevronDown size={16} strokeWidth={2} />
@@ -29,18 +29,16 @@ export function HomeHeader() {
           </div>
           <button onClick={() => navigate('/notifications')} aria-label="Notifications" className="relative -m-2 p-2">
             <Bell size={24} strokeWidth={1.75} />
-            {state.showNotifications && <span className="absolute right-2 top-2 size-2 rounded-full bg-brand ring-2 ring-white" />}
+            {state.showNotifications && state.dismissedNotifications.length < 3 && <span className="absolute right-2 top-2 size-2 rounded-full bg-brand ring-2 ring-bg" />}
           </button>
         </div>
       </div>
       <CarTypeSheet
         open={open}
-        value={type}
+        cars={state.cars}
+        value={primaryCar?.id ?? null}
         onClose={() => setOpen(false)}
-        onSave={(t) => {
-          setOpen(false)
-          if (primaryCar) set((s) => ({ cars: s.cars.map((c) => (c.id === primaryCar.id ? { ...c, type: t } : c)) }))
-        }}
+        onSave={(id) => { setOpen(false); set({ primaryCarId: id }) }}
       />
     </>
   )
@@ -65,7 +63,7 @@ function ProgressCard() {
   const fill = searching ? 0.6 : Math.min(3, b.stage <= 1 ? 1 : b.stage <= 3 ? 2 : 3)
   const label = searching ? 'Finding your washer' : b.stage >= 5 ? 'Your car is ready' : 'Arriving in 15–30 min'
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-line bg-white p-4">
+    <div className="flex flex-col gap-4 rounded-lg border border-line bg-bg p-4">
       <div className="flex items-center justify-between">
         <p className="text-sm font-bold">{label}</p>
         <Badge>{searching ? 'Pending' : b.stage >= 5 ? 'Done' : 'Accepted'}</Badge>
@@ -88,7 +86,7 @@ function ProgressCard() {
         ))}
       </div>
       <div className="flex flex-col gap-1 text-sm leading-[1.5]">
-        <p>{serviceById(b.service).listName} wash confirmed</p>
+        <p>Car wash confirmed</p>
         <p className="text-muted">We’ve received your request and will keep you updated.</p>
       </div>
       <Button variant="tertiary" size="sm" onClick={() => navigate(searching ? '/book/confirm' : '/bookings')}>Track your service</Button>
@@ -138,7 +136,7 @@ export function Offline() {
     <Screen>
       <StatusBar tall />
       <HomeHeader />
-      <EmptyState image={illCalendar} title="You're offline" body="Check your connection. We'll refresh your bookings as soon as you're back online." note="Your saved bookings are safe.">
+      <EmptyState image={illCalendar} title="You're offline" body="Check your connection. We'll refresh your bookings as soon as you're back online.">
         <Button onClick={() => navigate('/home', { replace: true })}>Retry</Button>
       </EmptyState>
       <BottomNav />

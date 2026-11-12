@@ -15,6 +15,7 @@ export type Booking = {
   createdAt: number
 }
 export type PastBooking = { id: string; service: ServiceId }
+export type ThemePref = 'system' | 'light' | 'dark'
 
 export type AppState = {
   onboarded: boolean
@@ -27,12 +28,16 @@ export type AppState = {
   recent: PastBooking[]
   notifications: boolean
   showNotifications: boolean
-  settings: { push: boolean; biometric: boolean }
+  dismissedNotifications: string[]
+  settings: { push: boolean; biometric: boolean; language: 'en' | 'ar' }
+  theme: ThemePref
   savedCarBanner: boolean
   draft: { service: ServiceId; addons: string[]; location: string | null; when: string | null }
   offline: boolean
   failPayment: boolean
   noWasher: boolean
+  wrongOtp: boolean
+  locationOff: boolean
 }
 
 const SEED: AppState = {
@@ -54,12 +59,16 @@ const SEED: AppState = {
   ],
   notifications: true,
   showNotifications: true,
-  settings: { push: true, biometric: false },
+  dismissedNotifications: [],
+  settings: { push: true, biometric: false, language: 'en' },
+  theme: 'system',
   savedCarBanner: true,
   draft: { service: 'express', addons: ['wax', 'engine'], location: null, when: null },
   offline: false,
   failPayment: false,
   noWasher: false,
+  wrongOtp: false,
+  locationOff: false,
 }
 
 const KEY = 'ongo-prototype-v1'
@@ -67,7 +76,10 @@ const KEY = 'ongo-prototype-v1'
 function load(): AppState {
   try {
     const raw = localStorage.getItem(KEY)
-    if (raw) return { ...SEED, ...JSON.parse(raw) }
+    if (raw) {
+      const saved = JSON.parse(raw)
+      return { ...SEED, ...saved, settings: { ...SEED.settings, ...saved.settings } }
+    }
   } catch { /* storage blocked — run from seed */ }
   return SEED
 }
@@ -77,6 +89,19 @@ type Ctx = {
   set: (patch: Partial<AppState> | ((s: AppState) => Partial<AppState>)) => void
   reset: () => void
   primaryCar: Car | null
+  resolvedTheme: 'light' | 'dark'
+}
+
+function useSystemDark() {
+  const q = '(prefers-color-scheme: dark)'
+  const [dark, setDark] = useState(() => window.matchMedia(q).matches)
+  useEffect(() => {
+    const mq = window.matchMedia(q)
+    const on = () => setDark(mq.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return dark
 }
 
 const StoreCtx = createContext<Ctx | null>(null)
@@ -94,9 +119,17 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   const reset = useCallback(() => setState(SEED), [])
 
+  // Resolve the Appearance preference and publish it on <html data-theme> so CSS tokens swap.
+  const systemDark = useSystemDark()
+  const resolvedTheme: 'light' | 'dark' = state.theme === 'system' ? (systemDark ? 'dark' : 'light') : state.theme
+  useEffect(() => {
+    document.documentElement.dataset.theme = resolvedTheme
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', resolvedTheme === 'dark' ? '#0b0d0e' : '#ffffff')
+  }, [resolvedTheme])
+
   const primaryCar = state.cars.find((c) => c.id === state.primaryCarId) ?? state.cars[0] ?? null
 
-  const value = useMemo(() => ({ state, set, reset, primaryCar }), [state, set, reset, primaryCar])
+  const value = useMemo(() => ({ state, set, reset, primaryCar, resolvedTheme }), [state, set, reset, primaryCar, resolvedTheme])
   return <StoreCtx.Provider value={value}>{children}</StoreCtx.Provider>
 }
 

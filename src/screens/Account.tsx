@@ -1,15 +1,16 @@
-import { useState } from 'react'
-import { motion } from 'motion/react'
+import { useState, type ReactNode } from 'react'
+import { AnimatePresence, motion, useMotionValue, useTransform } from 'motion/react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
-import { Bell, ChevronRight, CircleCheck, Cog, CreditCard, LogOut, MailOpen, MapPin, Phone, Plus, ShieldCheck, ShieldQuestion, UserX } from 'lucide-react'
+import { Bell, ChevronRight, CircleCheck, Cog, CreditCard, LogOut, MailOpen, MapPin, Phone, Plus, ShieldCheck, ShieldQuestion, Trash2, UserX } from 'lucide-react'
 import { useStore, uid } from '../lib/store'
 import { NOTIFICATIONS } from '../lib/data'
-import { Badge, BottomNav, Button, EmptyState, Field, Footer, Header, InfoCard, OptionCard, RowButton, Screen, Scroll, SectionLabel, StatusBar, Toast, cx, inputBox } from '../components/ui'
-import { ConfirmSheet } from '../components/Sheets'
+import { Badge, BottomNav, Button, EmptyState, Field, Footer, Header, InfoCard, OptionCard, RowButton, Screen, Scroll, SectionLabel, Segmented, StatusBar, ThemedImg, Toast, cx, inputBox } from '../components/ui'
+import { ConfirmSheet, carSummary } from '../components/Sheets'
 import { CarForm } from './Onboarding'
 
 import avatarUser from '../assets/img/avatar-user.jpg'
 import symbol from '../assets/icons/ongo-symbol.svg'
+import symbolWhite from '../assets/icons/ongo-symbol-white.svg'
 import mcLg from '../assets/icons/mastercard-lg.svg'
 import visaLg from '../assets/icons/visa-lg.svg'
 import appleLg from '../assets/icons/applepay-lg.svg'
@@ -20,7 +21,7 @@ import illBell from '../assets/img/ill-bell.png'
 import illCard from '../assets/img/ill-card.png'
 
 const TitleBar = ({ title }: { title: string }) => (
-  <div className="shrink-0 bg-white px-6 py-1"><div className="flex h-14 items-center justify-center"><h1 className="text-lg font-bold">{title}</h1></div></div>
+  <div className="shrink-0 bg-bg px-6 py-1"><div className="flex h-14 items-center justify-center"><h1 className="text-lg font-bold">{title}</h1></div></div>
 )
 
 /* ---------- Garage ---------- */
@@ -29,7 +30,7 @@ export function Garage() {
   const { state, set } = useStore()
   return (
     <Screen bg="bg-bg-2">
-      <div className="bg-white"><StatusBar tall /><TitleBar title="Garage" /></div>
+      <div className="bg-bg"><StatusBar tall /><TitleBar title="Garage" /></div>
       {state.cars.length === 0 ? (
         <EmptyState image={illCar} title="No vehicles yet" body="Add your car once and we'll price every wash for its size." note="Takes less than a minute.">
           <Button onClick={() => navigate('/garage/new')}>Add a vehicle</Button>
@@ -43,7 +44,7 @@ export function Garage() {
                 selected={c.id === state.primaryCarId}
                 onClick={() => { set({ primaryCarId: c.id }); navigate(`/garage/${c.id}`) }}
                 title={c.name}
-                sub={`${c.type.startsWith('SUV') ? 'SUV' : c.type} · ${c.type.includes('7') ? 7 : 5} seats · ${c.color}`}
+                sub={carSummary(c)}
               />
             ))}
           </div>
@@ -86,7 +87,7 @@ export function Profile() {
       <StatusBar />
       <Scroll>
         <div className="flex flex-col gap-6 px-5 pb-12">
-          <button onClick={() => navigate('/profile/edit')} className="flex h-24 items-center gap-2 overflow-hidden rounded-lg bg-white p-4 text-left transition-colors active:bg-[#fafafa]">
+          <button onClick={() => navigate('/profile/edit')} className="flex h-24 items-center gap-2 overflow-hidden rounded-lg bg-bg p-4 text-left transition-colors active:bg-ink/[0.03]">
             <img src={avatarUser} alt="" width={64} height={64} className="size-16 rounded-full object-cover" />
             <span className="flex-1 pl-1 font-bold text-muted">{state.user.name}</span>
             <ChevronRight size={16} strokeWidth={2.25} />
@@ -103,7 +104,7 @@ export function Profile() {
 
           <section className="flex flex-col gap-3">
             <SectionLabel>My garage</SectionLabel>
-            <button onClick={() => navigate('/garage')} className="flex items-center gap-2 rounded-md bg-white p-3 pl-3 text-left">
+            <button onClick={() => navigate('/garage')} className="flex items-center gap-2 rounded-md bg-bg p-3 pl-3 text-left">
               {primaryCar ? (
                 <span className="flex flex-1 flex-col gap-3">
                   <span className="flex items-center gap-2 text-xs text-muted">{primaryCar.type.startsWith('SUV') ? 'SUV' : primaryCar.type}<Badge tone="brand">Primary</Badge></span>
@@ -116,7 +117,7 @@ export function Profile() {
 
           <section className="flex flex-col gap-3">
             <SectionLabel>Locations</SectionLabel>
-            <div className="flex flex-col gap-3 rounded-md bg-white p-3">
+            <div className="flex flex-col gap-3 rounded-md bg-bg p-3">
               <span className="text-xs text-muted">Home</span>
               <span className="text-sm leading-[1.5]">Building 12, Al Waab Street<br />Doha, Qatar 000000</span>
             </div>
@@ -185,54 +186,104 @@ export function ProfileEdit() {
 function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button role="switch" aria-checked={on} aria-label={label} onClick={() => onChange(!on)} className={cx('relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200', on ? 'bg-brand' : 'bg-line')}>
-      <motion.span className="absolute top-[3px] size-[18px] rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.15)]" animate={{ left: on ? 19 : 3 }} transition={{ type: 'spring', duration: 0.3, bounce: 0.2 }} />
+      <motion.span className="absolute top-[3px] size-[18px] rounded-full bg-[#fff] shadow-[0_1px_2px_rgba(0,0,0,0.15)]" animate={{ left: on ? 19 : 3 }} transition={{ type: 'spring', duration: 0.3, bounce: 0.2 }} />
     </button>
   )
 }
 
 export function Settings() {
-  const { state, set } = useStore()
+  const { state, set, resolvedTheme } = useStore()
   const s = state.settings
+  const row = 'flex items-center gap-2 bg-bg px-4 py-3 text-sm leading-[1.5]'
   return (
-    <Screen>
-      <StatusBar />
-      <Header title="App Settings" />
-      <div className="flex flex-col gap-4 px-5 pt-7">
-        <div className="flex flex-col gap-4 rounded-lg border border-line p-4">
-          <div className="flex items-center justify-between text-sm">Push notifications<Toggle label="Push notifications" on={s.push} onChange={(v) => set({ settings: { ...s, push: v } })} /></div>
-          <div className="h-px bg-line/60" />
-          <div className="flex items-center justify-between text-sm">Biometric lock<Toggle label="Biometric lock" on={s.biometric} onChange={(v) => set({ settings: { ...s, biometric: v } })} /></div>
+    <Screen bg="bg-bg-2">
+      <div className="bg-bg"><StatusBar tall /><Header title="App Settings" /></div>
+      <Scroll>
+        <div className="flex flex-col gap-4 px-5 pb-12 pt-7">
+          <div className="flex flex-col overflow-hidden rounded-lg">
+            <div className={row}><span className="flex-1">Push notifications</span><Toggle label="Push notifications" on={s.push} onChange={(v) => set({ settings: { ...s, push: v } })} /></div>
+            <div className={row}><span className="flex-1 text-muted">Biometric lock</span><Toggle label="Biometric lock" on={s.biometric} onChange={(v) => set({ settings: { ...s, biometric: v } })} /></div>
+            <div className={row}>
+              <span className="flex-1 text-muted">Appearance</span>
+              <Segmented id="appearance" label="Appearance" value={resolvedTheme} onChange={(v) => set({ theme: v })} items={[{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]} />
+            </div>
+            <div className={row}>
+              <span className="flex-1 text-muted">Language</span>
+              <Segmented id="language" label="Language" value={s.language} onChange={(v) => set({ settings: { ...s, language: v } })} items={[{ value: 'en', label: 'English' }, { value: 'ar', label: 'العربية', dir: 'rtl' }]} />
+            </div>
+          </div>
+          <div className="flex flex-col overflow-hidden rounded-lg">
+            <button className={cx(row, 'text-left transition-colors active:bg-ink/[0.03]')}><span className="flex-1">Terms &amp; privacy</span><ChevronRight size={16} strokeWidth={2.25} /></button>
+            <p className={row}><span className="flex-1">App version</span><span className="text-[13px] text-muted-2">1.4.2</span></p>
+          </div>
         </div>
-        <div className="flex flex-col gap-2.5 rounded-lg border border-line px-3 py-4 text-sm">
-          <button className="text-left">Terms &amp; privacy</button>
-          <div className="h-px bg-line/60" />
-          <p className="flex items-center gap-2.5">App version <span className="text-[13px] text-muted-2">1.4.2</span></p>
-        </div>
-      </div>
+      </Scroll>
     </Screen>
   )
 }
 
 /* ---------- Notifications ---------- */
+/* Swipe left to delete (Figma annotation on Notifications: "Swipe to delete") */
+function SwipeRow({ children, onDelete }: { children: ReactNode; onDelete: () => void }) {
+  const x = useMotionValue(0)
+  const reveal = useTransform(x, [-96, -24, 0], [1, 0.4, 0])
+  const [armed, setArmed] = useState(false)
+  return (
+    <motion.div
+      layout
+      className="relative overflow-hidden"
+      initial={false}
+      exit={{ height: 0, opacity: 0, transition: { duration: 0.24, ease: [0.25, 1, 0.5, 1] } }}
+    >
+      <motion.button
+        aria-label="Delete notification"
+        onClick={onDelete}
+        style={{ opacity: reveal }}
+        className={cx('absolute inset-y-0 right-0 flex w-24 items-center justify-center text-white transition-colors duration-150', armed ? 'bg-danger' : 'bg-danger/85')}
+      >
+        <Trash2 size={20} strokeWidth={2} />
+      </motion.button>
+      <motion.div
+        drag="x"
+        dragDirectionLock
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={{ left: 0.9, right: 0.05 }}
+        style={{ x, touchAction: 'pan-y' }}
+        onDrag={(_, i) => setArmed(i.offset.x < -140)}
+        onDragEnd={(_, i) => { setArmed(false); if (i.offset.x < -140 || i.velocity.x < -700) onDelete() }}
+        className="relative bg-bg"
+      >
+        {children}
+      </motion.div>
+    </motion.div>
+  )
+}
+
 export function Notifications() {
-  const { state } = useStore()
+  const { state, set } = useStore()
+  const list = NOTIFICATIONS.filter((n) => !state.dismissedNotifications.includes(n.id))
+  const empty = !state.showNotifications || list.length === 0
   return (
     <Screen>
       <StatusBar />
       <Header title="Notifications" />
-      {!state.showNotifications ? (
+      {empty ? (
         <EmptyState image={illBell} title="No notifications yet" body="Booking updates, washer arrivals and offers will show up here." />
       ) : (
-        <Scroll className="px-6">
-          {NOTIFICATIONS.map((n, i) => (
-            <motion.div key={n.id} className="flex gap-3" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05, duration: 0.3 }}>
-              <span className="flex w-6 shrink-0 items-center">{n.icon === 'logo' ? <img src={symbol} alt="" width={24} height={24} /> : <MapPin size={24} strokeWidth={1.75} />}</span>
-              <div className="flex flex-1 flex-col gap-3 border-b border-line py-6">
-                <p className="flex items-center gap-2.5 text-sm font-bold">{n.title}{n.isNew && <Badge>New</Badge>}</p>
-                <p className="text-sm leading-[1.5] opacity-60">{n.body}</p>
-              </div>
-            </motion.div>
-          ))}
+        <Scroll>
+          <AnimatePresence initial={false}>
+            {list.map((n, i) => (
+              <SwipeRow key={n.id} onDelete={() => set((s) => ({ dismissedNotifications: [...s.dismissedNotifications, n.id] }))}>
+                <motion.div className="flex gap-3 px-6" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05, duration: 0.3 }}>
+                  <span className="flex w-6 shrink-0 items-center">{n.icon === 'logo' ? <ThemedImg light={symbol} dark={symbolWhite} alt="" width={24} height={24} /> : <MapPin size={24} strokeWidth={1.75} />}</span>
+                  <div className="flex flex-1 flex-col gap-3 border-b border-line py-6">
+                    <p className="flex items-center gap-2.5 text-sm font-bold">{n.title}{n.isNew && <Badge>New</Badge>}</p>
+                    <p className="text-sm leading-[1.5] opacity-60">{n.body}</p>
+                  </div>
+                </motion.div>
+              </SwipeRow>
+            ))}
+          </AnimatePresence>
         </Scroll>
       )}
     </Screen>
@@ -266,7 +317,7 @@ export function Payments() {
                 <button
                   key={p.id}
                   onClick={() => { set({ primaryPaymentId: p.id }); if (fromBooking) navigate(-1) }}
-                  className={cx('flex items-center gap-2.5 rounded-sm bg-white p-3 text-left transition-[box-shadow,transform] active:scale-[0.985]', fromBooking && primary ? 'shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'shadow-[inset_0_0_0_1px_var(--color-line)]')}
+                  className={cx('flex items-center gap-2.5 rounded-sm bg-bg p-3 text-left transition-[box-shadow,transform] active:scale-[0.985]', fromBooking && primary ? 'shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'shadow-[inset_0_0_0_1px_var(--color-line)]')}
                 >
                   <img src={brandIcon[p.brand]} alt="" width={58} height={40} />
                   <span className="flex flex-1 flex-col gap-2">

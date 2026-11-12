@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "@fontsource-variable/inter";
 
+/* Dark mode is driven by data-theme on <html> (set from the in-app Appearance setting), not the OS media query. */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
 /* Design tokens — mirrored from the Figma "Theme" (Light) and "Sizes" (Mobile) variable collections. */
 @theme {
   --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -19,12 +22,17 @@
   --color-brand: #a0e870;          /* surface/brand, button/primary/background */
   --color-brand-border: #74a34e;   /* button/primary/border */
   --color-brand-hover: #455d2d;    /* button/primary/background-hover */
+  --color-brand-hover-ink: #ffffff; /* button/primary/text-hover */
+  --color-on-brand: #0b0d0e;       /* button/primary/text — same in Light and Dark */
   --color-brand-dot: #92d265;
   --color-brand-subtle: #fefbf1;   /* surface/brand-subtle */
   --color-success-subtle: #ecfdf3; /* surface/success-subtle */
   --color-warning-subtle: #fef8e5; /* surface/warning-subtle */
   --color-danger-subtle: #fee4e2;  /* surface/danger-subtle */
   --color-info-subtle: #e9effb;    /* surface/info-subtle */
+
+  --color-card: #e3e3e3;           /* surface/card-bg */
+  --color-page: #e9e9e6;           /* desktop canvas behind the phone frame */
 
   --color-badge-green: #a6f4c5;
   --color-badge-green-ink: #05603a;
@@ -39,13 +47,39 @@
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Dark mode — values from the Figma "Theme" collection, Dark mode.
+   Exception: Figma keeps the *-subtle surfaces at their light values in Dark, which puts white text on near-white
+   fills. Those four use dark tints of the same hues here so info cards and toasts stay readable. */
+[data-theme=dark] {
+  color-scheme: dark;
+  --color-ink: #ffffff;
+  --color-muted: #78797a;
+  --color-muted-2: #8a8b8c;
+  --color-bg: #0b0d0e;
+  --color-bg-2: #161819;
+  --color-card: #121314;
+  --color-line: rgba(255, 255, 255, 0.2);
+  --color-line-strong: rgba(83, 84, 85, 0.5);
+  --color-brand: #a0e870;
+  --color-brand-border: #a0e870;
+  --color-brand-hover: #ffffff;
+  --color-brand-hover-ink: #0b0d0e;
+  --color-brand-subtle: #202224;
+  --color-success-subtle: #0f2a1d;
+  --color-warning-subtle: #2b2412;
+  --color-danger-subtle: #3a1714;
+  --color-info-subtle: #141d30;
+  --color-page: #050607;
+}
+
 @layer base {
   html, body, #root { height: 100%; }
   body {
     margin: 0;
     font-family: var(--font-sans);
     color: var(--color-ink);
-    background: #e9e9e6;
+    background: var(--color-page);
+    transition: background-color 200ms ease;
     -webkit-font-smoothing: antialiased;
     -webkit-tap-highlight-color: transparent;
     text-rendering: optimizeLegibility;

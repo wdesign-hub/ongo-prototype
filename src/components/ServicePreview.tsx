@@ -11,7 +11,7 @@ export function ServicePreview({ titleSize = 18, priceSize = 36 }: { titleSize?:
   return (
     <div className="flex w-full flex-col gap-2">
       <Tabs id="services" value={tab} onChange={setTab} items={SERVICES.map((x) => ({ value: x.id, label: x.tab }))} />
-      <div className="overflow-hidden rounded-lg border border-line bg-white">
+      <div className="overflow-hidden rounded-lg border border-line bg-bg">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={tab}

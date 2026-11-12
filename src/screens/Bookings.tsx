@@ -42,7 +42,7 @@ function WasherHead() {
 /* Vertical tracking timeline */
 function Timeline({ stage }: { stage: number }) {
   return (
-    <div className="rounded-lg border border-line bg-white px-4 py-3">
+    <div className="rounded-lg border border-line bg-bg px-4 py-3">
       {TIMELINE.map((e, i) => {
         const done = i < stage || stage >= 5
         const current = i === stage && stage < 5
@@ -118,7 +118,7 @@ export function BookingsCurrent() {
             </AnimatePresence>
             <div className="flex flex-col gap-3 rounded-lg border border-line p-3">
               <WasherHead />
-              <Button variant="tertiary" size="md" onClick={() => window.open('tel:+97400000000')}>Contact</Button>
+              <Button size="md" onClick={() => window.open('tel:+97400000000')}>Contact</Button>
               {finished ? (
                 <>
                   <Button size="md" onClick={() => navigate('/rate')}>Wash complete</Button>
@@ -166,7 +166,7 @@ export function BookingsRecent() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04, duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
                   onClick={() => { set((st) => ({ draft: { ...st.draft, service: r.service } })); navigate('/book?step=service') }}
-                  className="flex min-h-20 w-full items-center gap-2 rounded-lg bg-white py-3 pl-2 pr-4 text-left shadow-[inset_0_0_0_1px_var(--color-line)] transition-transform active:scale-[0.985]"
+                  className="flex min-h-20 w-full items-center gap-2 rounded-lg bg-bg py-3 pl-2 pr-4 text-left shadow-[inset_0_0_0_1px_var(--color-line)] transition-transform active:scale-[0.985]"
                 >
                   <img src={s.icon} alt="" width={56} height={56} className="size-14 object-contain" />
                   <span className="flex flex-1 flex-col gap-2">
@@ -216,7 +216,7 @@ export function Rate() {
               {FEEDBACK_TAGS.map((t) => {
                 const on = tags.includes(t)
                 return (
-                  <button key={t} onClick={() => setTags((x) => (on ? x.filter((y) => y !== t) : [...x, t]))} aria-pressed={on} className={cx('h-[27px] rounded-full border px-3.5 text-xs transition-colors duration-150', on ? 'border-brand-border bg-success-subtle' : 'border-line bg-white')}>
+                  <button key={t} onClick={() => setTags((x) => (on ? x.filter((y) => y !== t) : [...x, t]))} aria-pressed={on} className={cx('h-[27px] rounded-full border px-3.5 text-xs transition-colors duration-150', on ? 'border-brand-border bg-success-subtle' : 'border-line bg-bg')}>
                     {t}
                   </button>
                 )

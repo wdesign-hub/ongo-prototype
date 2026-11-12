@@ -11,7 +11,7 @@ npm install
 npm run dev
 ```
 
-On desktop the app renders inside an iPhone frame with a side panel to jump to any screen and toggle demo states (empty garage, no cards, payment failure, no washer available). On a phone it runs full-screen.
+On desktop the app renders inside an iPhone frame with a side panel to jump to any screen and toggle demo states (empty garage, no payment methods, payment failure, no washer available, wrong OTP code, location services off) and switch the theme (System / Light / Dark). On a phone it runs full-screen.
 
 ## Flows
 
@@ -21,7 +21,7 @@ On desktop the app renders inside an iPhone frame with a side panel to jump to a
 - Account: garage, profile, settings, notifications, payment methods
 - Empty, error and confirmation states
 
-Design tokens in `src/index.css` mirror the Figma Theme and Sizes variables. State persists to `localStorage`; use "Reset demo" to start over.
+Design tokens in `src/index.css` mirror the Figma Theme (Light and Dark modes) and Sizes variables. Dark mode is set on `<html data-theme>` from App Settings → Appearance; Tailwind's `dark:` variant follows that attribute. State persists to `localStorage`; use "Reset demo" to start over.
 
 ## Live demo
 

@@ -3,12 +3,14 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { ArrowLeft, Calendar, ChevronRight, Circle, MapPin, Search, Timer, Warehouse, X } from 'lucide-react'
 import { useStore, uid } from '../lib/store'
-import { ADDONS, CANCEL_REASONS, LOCATIONS, SERVICES, SERVICE_LIST_ORDER, serviceById, type ServiceId } from '../lib/data'
-import { Badge, BackButton, Button, FeatureLine, Footer, Header, Screen, Scroll, StatusBar, SheetHandle, cx, useTimeout } from '../components/ui'
+import { ADDONS, CANCEL_REASONS, LOCATIONS, PIN_AREAS, SERVICES, SERVICE_LIST_ORDER, serviceById, type ServiceId } from '../lib/data'
+import { Badge, BackButton, Button, FeatureLine, Footer, Header, Screen, Scroll, Sheet, StatusBar, SheetHandle, ThemedImg, cx, useTimeout } from '../components/ui'
 import { ConfirmSheet } from '../components/Sheets'
 
 import mapImg from '../assets/img/map.png'
 import logo from '../assets/icons/ongo-logo.svg'
+import logoWhite from '../assets/icons/ongo-logo-white.svg'
+import applePay from '../assets/icons/applepay-lg.svg'
 import mastercard from '../assets/icons/mastercard.svg'
 import visaSm from '../assets/icons/visa.svg'
 import illPin from '../assets/img/ill-pin.png'
@@ -17,9 +19,9 @@ import illCard from '../assets/img/ill-card.png'
 type Step = 'locate' | 'search' | 'service' | 'addons' | 'schedule'
 
 /* ---------- Map background: draggable, pin stays centred ---------- */
-function MapCanvas({ dim }: { dim?: boolean }) {
+function MapCanvas({ dim, onMoved }: { dim?: boolean; onMoved?: () => void }) {
   return (
-    <div className="absolute inset-0 overflow-hidden bg-[#f3f3f3]">
+    <div className="absolute inset-0 overflow-hidden bg-bg-2">
       <motion.img
         src={mapImg}
         alt=""
@@ -28,10 +30,11 @@ function MapCanvas({ dim }: { dim?: boolean }) {
         dragMomentum
         dragConstraints={{ left: -260, right: 260, top: -360, bottom: 360 }}
         dragElastic={0.12}
-        className="absolute left-1/2 top-1/2 h-[1688px] w-[780px] max-w-none -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none select-none active:cursor-grabbing"
+        onDragEnd={(_, i) => { if (Math.hypot(i.offset.x, i.offset.y) > 24) onMoved?.() }}
+        className="absolute left-1/2 top-1/2 h-[1688px] w-[780px] max-w-none -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none select-none active:cursor-grabbing dark:hue-rotate-180 dark:invert dark:brightness-[0.9] dark:contrast-[0.9]"
       />
       <AnimatePresence>
-        {dim && <motion.div className="pointer-events-none absolute inset-0 bg-white/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />}
+        {dim && <motion.div className="pointer-events-none absolute inset-0 bg-bg/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />}
       </AnimatePresence>
     </div>
   )
@@ -57,7 +60,7 @@ function DockSheet({ children, stepKey, tall }: { children: ReactNode; stepKey: 
   return (
     <motion.div
       layout
-      className={cx('absolute inset-x-0 bottom-0 z-20 flex flex-col rounded-t-lg bg-white shadow-[0_-8px_32px_rgba(11,13,14,0.10)]', tall && 'top-[44px]')}
+      className={cx('absolute inset-x-0 bottom-0 z-20 flex flex-col rounded-t-lg bg-bg shadow-[0_-8px_32px_rgba(11,13,14,0.10)]', tall && 'top-[44px]')}
       initial={reduce ? false : { y: '100%' }}
       animate={{ y: 0 }}
       transition={{ type: 'spring', duration: 0.5, bounce: 0.1 }}
@@ -95,7 +98,7 @@ function SheetTitle({ icon, onIcon, children }: { icon?: 'back' | 'close'; onIco
 
 function Chip({ children, onClick, icon }: { children: ReactNode; onClick?: () => void; icon?: ReactNode }) {
   return (
-    <button onClick={onClick} className="inline-flex h-[31px] items-center gap-1 self-start rounded-full border border-[#536922]/30 bg-line px-3 text-xs transition-transform active:scale-95">
+    <button onClick={onClick} className="inline-flex h-[31px] items-center gap-1 self-start rounded-full border border-[#536922]/30 bg-line dark:border-transparent px-3 text-xs transition-transform active:scale-95">
       {icon}{children}
     </button>
   )
@@ -111,8 +114,8 @@ function PayBlock({ onPay, label = 'Pay and continue', disabled }: { onPay: () =
       <button onClick={() => navigate('/payments?from=booking')} className="flex h-8 items-center justify-between text-xs">
         {card ? (
           <span className="flex items-center gap-2">
-            <img src={card.brand === 'visa' ? visaSm : mastercard} alt="" width={34} height={24} />
-            {card.label} <span className="tracking-wider">•••• {card.last4}</span> {card.bank && `(${card.bank})`}
+            <img src={card.brand === 'visa' ? visaSm : card.brand === 'applepay' ? applePay : mastercard} alt="" width={34} height={24} className="h-6 w-[34px] object-contain" />
+            {card.label} {card.last4 && <span className="tracking-wider">•••• {card.last4}</span>} {card.bank && `(${card.bank})`}
           </span>
         ) : 'Set up a payment method'}
         <ChevronRight size={16} strokeWidth={2} />
@@ -123,20 +126,29 @@ function PayBlock({ onPay, label = 'Pay and continue', disabled }: { onPay: () =
 }
 
 /* ---------- Step contents ---------- */
-function LocateStep({ go, onBack }: { go: (s: Step) => void; onBack: () => void }) {
+function LocateStep({ go, onBack, area, onConfirm }: { go: (s: Step) => void; onBack: () => void; area: string | null; onConfirm: () => void }) {
   return (
     <>
       <div className="flex flex-col items-center gap-3 px-6 py-4 text-center">
-        <h2 className="text-[22px] font-bold leading-none">Set your location</h2>
+        <h2 className="text-2xl font-bold leading-none">Set your location</h2>
         <p className="text-sm text-muted opacity-70">Drag map to move pin</p>
       </div>
       <div className="h-px bg-line" />
       <div className="flex flex-col gap-3 px-6 py-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
         <button onClick={() => go('search')} className="flex h-[45px] items-center justify-between rounded-[7px] bg-bg-2 px-3 text-left">
-          <span className="flex items-center gap-4 text-muted"><MapPin size={16} strokeWidth={2} className="text-ink" />Car location</span>
-          <Search size={16} strokeWidth={2} />
+          <span className="flex min-w-0 items-center gap-4 text-muted">
+            <MapPin size={16} strokeWidth={2} className="shrink-0 text-ink" />
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span key={area ?? 'empty'} className="truncate" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.18 }}>
+                {area ?? 'Car location'}
+              </motion.span>
+            </AnimatePresence>
+          </span>
+          <Search size={16} strokeWidth={2} className="shrink-0" />
         </button>
-        <Button className="!h-[49px] font-semibold" onClick={() => go('service')}>Search for a location</Button>
+        {area
+          ? <Button className="!h-[49px] !rounded-[7px] font-semibold" onClick={onConfirm}>Confirm location</Button>
+          : <Button className="!h-[49px] !rounded-[7px] font-semibold" onClick={() => go('service')}>Search for a location</Button>}
         <button onClick={onBack} className="sr-only">Back</button>
       </div>
     </>
@@ -190,7 +202,7 @@ function ServiceRow({ id, selected, onClick }: { id: ServiceId; selected: boolea
     <button
       onClick={onClick}
       aria-pressed={selected}
-      className={cx('flex min-h-20 w-full items-center gap-2 rounded-lg bg-white py-3 pl-2 pr-4 text-left transition-[box-shadow,transform] duration-150 active:scale-[0.985]', selected ? 'shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'shadow-[inset_0_0_0_1px_var(--color-line)]')}
+      className={cx('flex min-h-20 w-full items-center gap-2 rounded-lg bg-bg py-3 pl-2 pr-4 text-left transition-[box-shadow,transform] duration-150 active:scale-[0.985]', selected ? 'shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'shadow-[inset_0_0_0_1px_var(--color-line)]')}
     >
       <img src={s.icon} alt="" width={56} height={56} className="size-14 object-contain" />
       <span className="flex flex-1 flex-col items-start gap-2">
@@ -246,11 +258,11 @@ export function AddonGrid({ compact }: { compact?: boolean }) {
             aria-pressed={on}
             className={cx(
               'm-[1.5px] flex h-[88px] flex-col items-center justify-center gap-2 rounded-sm px-3 text-center text-xs leading-[1.25] text-muted transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.96]',
-              on ? 'bg-brand-subtle text-ink/70 shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'bg-white shadow-[inset_0_0_0_1px_var(--color-line-strong)]',
+              on ? 'bg-brand-subtle text-ink/70 shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'bg-bg shadow-[inset_0_0_0_1px_var(--color-line-strong)]',
               compact && 'h-[88px]',
             )}
           >
-            <img src={a.icon} alt="" width={24} height={24} />
+            <img src={a.icon} alt="" width={24} height={24} className="dark:invert" />
             {a.label}
           </button>
         )
@@ -348,6 +360,10 @@ export function BookingMap() {
   const go = (s: Step) => setParams({ step: s })
   const { state, set } = useStore()
   const [failed, setFailed] = useState(false)
+  const [area, setArea] = useState<string | null>(null)
+  const [moves, setMoves] = useState(0)
+  const [geoDismissed, setGeoDismissed] = useState(false)
+  const geoOpen = state.locationOff && !geoDismissed && step === 'locate'
 
   const pay = () => {
     if (state.failPayment) { setFailed(true); return }
@@ -358,7 +374,7 @@ export function BookingMap() {
 
   return (
     <div className="absolute inset-0 overflow-hidden">
-      <MapCanvas dim={step === 'search'} />
+      <MapCanvas dim={step === 'search'} onMoved={() => { setArea(PIN_AREAS[moves % PIN_AREAS.length].name); setMoves((m) => m + 1) }} />
       <div className="relative z-10"><StatusBar /></div>
       {step === 'locate' && (
         <>
@@ -367,12 +383,30 @@ export function BookingMap() {
         </>
       )}
       <DockSheet stepKey={step} tall={step === 'search'}>
-        {step === 'locate' && <LocateStep go={go} onBack={() => navigate(-1)} />}
+        {step === 'locate' && (
+          <LocateStep
+            go={go}
+            area={area}
+            onBack={() => navigate(-1)}
+            onConfirm={() => { const a = PIN_AREAS.find((x) => x.name === area); set((s) => ({ draft: { ...s.draft, location: a?.id ?? null } })); go('service') }}
+          />
+        )}
         {step === 'search' && <SearchStep go={go} onBack={() => (params.get('step') ? navigate(-1) : go('locate'))} onPick={(id) => { set((s) => ({ draft: { ...s.draft, location: id } })); go('service') }} />}
         {step === 'service' && <ServiceStep go={go} onClose={() => navigate('/home', { replace: true })} onPay={pay} />}
         {step === 'addons' && <AddonsStep go={go} onPay={pay} />}
         {step === 'schedule' && <ScheduleStep go={go} onDone={(when) => { set((s) => ({ draft: { ...s.draft, when } })); go('search') }} />}
       </DockSheet>
+      {/* Bottom sheet / Geolocation settings — demo toggle "Location services off" */}
+      <Sheet open={geoOpen} onClose={() => setGeoDismissed(true)}>
+        <div className="flex flex-col gap-3 px-6 py-4 text-center">
+          <h2 className="text-2xl font-bold leading-[1.3]">Turn on location services</h2>
+          <p className="text-left text-sm leading-[1.5] opacity-70 text-pretty">Go to Settings &gt; Privacy &amp; Security &gt; Location Services and turn it on. This lets us find your car and show car wash services near you.</p>
+        </div>
+        <div className="h-px bg-line" />
+        <div className="px-6 pt-4" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
+          <Button variant="secondary" onClick={() => { set({ locationOff: false }); setGeoDismissed(true) }}>Go to Settings</Button>
+        </div>
+      </Sheet>
       <ConfirmSheet open={failed} onClose={() => setFailed(false)} image={illCard} title="Payment didn't go through" body="Your bank declined the charge. Try again, or use a different card.">
         <Button onClick={() => { set({ failPayment: false }); setFailed(false); setTimeout(pay, 250) }}>Try again</Button>
         <Button variant="tertiary" onClick={() => navigate('/payments?from=booking')}>Change payment method</Button>
@@ -396,7 +430,7 @@ export function BookingDetails() {
               <button
                 key={s.id}
                 onClick={() => set((st) => ({ draft: { ...st.draft, service: s.id } }))}
-                className={cx('flex flex-col gap-4 rounded-lg bg-white p-4 text-left transition-shadow duration-150', sel ? 'shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'shadow-[inset_0_0_0_1px_var(--color-line)]')}
+                className={cx('flex flex-col gap-4 rounded-lg bg-bg p-4 text-left transition-shadow duration-150', sel ? 'shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'shadow-[inset_0_0_0_1px_var(--color-line)]')}
               >
                 <div className="flex items-center gap-1">
                   <img src={s.icon} alt="" width={34} height={34} className="size-[34px] object-contain" />
@@ -427,14 +461,9 @@ export function BookingDetails() {
 function PulsingLogo() {
   const reduce = useReducedMotion()
   return (
-    <motion.img
-      src={logo}
-      alt="ONGO"
-      width={134}
-      height={132}
-      animate={reduce ? undefined : { scale: [1, 1.04, 1] }}
-      transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}
-    />
+    <motion.div animate={reduce ? undefined : { scale: [1, 1.04, 1] }} transition={{ duration: 1.6, repeat: Infinity, ease: 'easeInOut' }}>
+      <ThemedImg light={logo} dark={logoWhite} alt="ONGO" width={134} height={132} />
+    </motion.div>
   )
 }
 
@@ -474,7 +503,7 @@ export function NoWasher() {
     <Screen>
       <StatusBar />
       <div className="flex flex-1 flex-col items-center justify-center gap-7 px-6">
-        <img src={logo} alt="ONGO" width={134} height={132} />
+        <ThemedImg light={logo} dark={logoWhite} alt="ONGO" width={134} height={132} />
         <h1 className="text-center text-[22px] font-bold leading-[1.3] text-balance">No washers are available nearby right now.</h1>
         <div className="flex w-full flex-col gap-3 rounded-lg border border-line p-4">
           <p className="text-sm text-muted-2">Your payment hold was released. You were not charged.</p>
@@ -500,7 +529,7 @@ export function CancelReason() {
             key={r}
             onClick={() => setSel(i)}
             aria-pressed={sel === i}
-            className={cx('flex h-[60px] w-full items-center justify-between gap-3 rounded-sm bg-white px-4 text-left text-lg transition-shadow duration-150', sel === i ? 'shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'shadow-[inset_0_0_0_1.5px_var(--color-line)]')}
+            className={cx('flex h-[60px] w-full items-center justify-between gap-3 rounded-sm bg-bg px-4 text-left text-lg transition-shadow duration-150', sel === i ? 'shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'shadow-[inset_0_0_0_1.5px_var(--color-line)]')}
           >
             {r}
             <span className="relative flex size-6 items-center justify-center">

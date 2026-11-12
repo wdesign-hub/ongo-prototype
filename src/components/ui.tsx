@@ -19,7 +19,7 @@ export function StatusBar({ dark = false, tall = false }: { dark?: boolean; tall
   return (
     <div className={cx('relative flex shrink-0 items-start justify-between', tall ? 'h-[59px] pt-[21px]' : 'h-[54px] pt-[18px]')} aria-hidden>
       <span className={cx('w-[133px] pl-4 text-center text-[17px] font-semibold leading-[22px]', dark ? 'text-white' : 'text-ink')}>9:41</span>
-      <img src={statusLevels} alt="" width={133} height={13} className={cx('mt-[5px]', dark && 'invert')} />
+      <img src={statusLevels} alt="" width={133} height={13} className={cx('mt-[5px]', dark ? 'invert' : 'dark:invert')} />
     </div>
   )
 }
@@ -35,8 +35,8 @@ type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 const btnBase =
   'relative inline-flex select-none items-center justify-center gap-1 rounded-sm border px-3 text-center leading-[1.5] transition-[background-color,color,border-color,transform] duration-150 ease-out active:scale-[0.97] touch-manipulation disabled:active:scale-100'
 const btnVariant: Record<BtnVariant, string> = {
-  primary: 'bg-brand border-brand-border text-ink [@media(hover:hover)]:hover:bg-brand-hover [@media(hover:hover)]:hover:text-white',
-  secondary: 'bg-transparent border-line-strong text-ink [@media(hover:hover)]:hover:bg-ink [@media(hover:hover)]:hover:border-ink [@media(hover:hover)]:hover:text-white',
+  primary: 'bg-brand border-brand-border text-on-brand [@media(hover:hover)]:hover:bg-brand-hover [@media(hover:hover)]:hover:text-brand-hover-ink',
+  secondary: 'bg-transparent border-line-strong text-ink [@media(hover:hover)]:hover:bg-ink [@media(hover:hover)]:hover:border-ink [@media(hover:hover)]:hover:text-bg',
   tertiary: 'bg-bg-2 border-transparent text-ink [@media(hover:hover)]:hover:bg-line',
   danger: 'bg-danger-subtle border-danger text-danger [@media(hover:hover)]:hover:bg-danger [@media(hover:hover)]:hover:text-white',
   ghost: 'bg-transparent border-transparent text-ink',
@@ -121,12 +121,12 @@ export function Tabs<T extends string>({ items, value, onChange, id }: { items: 
             role="tab"
             aria-selected={active}
             onClick={() => onChange(it.value)}
-            className={cx('relative flex-1 rounded-sm px-3 text-sm transition-colors duration-150', active ? 'font-bold' : 'text-ink [@media(hover:hover)]:hover:bg-black/[0.03]')}
+            className={cx('relative flex-1 rounded-sm px-3 text-sm transition-colors duration-150', active ? 'font-bold' : 'text-ink [@media(hover:hover)]:hover:bg-ink/[0.04]')}
           >
             {active && (
               <motion.span
                 layoutId={`tab-pill-${id}`}
-                className="absolute inset-0 rounded-sm bg-white shadow-[0_1px_2px_rgba(11,13,14,0.06)]"
+                className="absolute inset-0 rounded-sm bg-bg shadow-[0_1px_2px_rgba(11,13,14,0.06)]"
                 transition={{ type: 'spring', duration: 0.35, bounce: 0.15 }}
               />
             )}
@@ -159,8 +159,8 @@ export function InfoCard({ tone = 'info', icon, title, children, onClose }: { to
 
 /* ---------- Badge ---------- */
 export function Badge({ tone = 'green', children }: { tone?: 'green' | 'dark' | 'brand'; children: ReactNode }) {
-  const t = { green: 'bg-badge-green text-badge-green-ink', dark: 'bg-badge-dark text-white', brand: 'bg-brand text-ink' }[tone]
-  return <span className={cx('inline-flex h-[17px] items-center rounded-xs px-1 text-xs leading-none', t)}>{children}</span>
+  const t = { green: 'bg-badge-green text-badge-green-ink', dark: 'bg-badge-dark text-white', brand: 'bg-brand text-on-brand' }[tone]
+  return <span className={cx('inline-flex h-[17px] w-fit items-center rounded-xs px-1 text-xs leading-none', t)}>{children}</span>
 }
 
 /* ---------- Field (Card entry field) ---------- */
@@ -173,7 +173,7 @@ export function Field({ label, children }: { label?: string; children: ReactNode
   )
 }
 export const inputBox =
-  'flex h-[52px] w-full items-center gap-2 rounded-sm border border-line bg-white px-3 text-base transition-[border-color,box-shadow] duration-150 focus-within:border-ink focus-within:shadow-[0_0_0_3px_rgba(160,232,112,0.35)]'
+  'flex h-[52px] w-full items-center gap-2 rounded-sm border border-line bg-bg px-3 text-base transition-[border-color,box-shadow] duration-150 focus-within:border-ink focus-within:shadow-[0_0_0_3px_rgba(160,232,112,0.35)]'
 
 /* ---------- Selectable option card (Detailed option / Cancellation reason) ---------- */
 export function OptionCard({ selected, onClick, title, sub, className, right }: { selected?: boolean; onClick?: () => void; title: ReactNode; sub?: ReactNode; className?: string; right?: ReactNode }) {
@@ -183,7 +183,7 @@ export function OptionCard({ selected, onClick, title, sub, className, right }: 
       onClick={onClick}
       aria-pressed={selected}
       className={cx(
-        'flex min-h-20 w-full items-center gap-3 rounded-lg bg-white px-4 py-3 text-left transition-[box-shadow,transform] duration-150 active:scale-[0.985]',
+        'flex min-h-20 w-full items-center gap-3 rounded-lg bg-bg px-4 py-3 text-left transition-[box-shadow,transform] duration-150 active:scale-[0.985]',
         selected ? 'shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'shadow-[inset_0_0_0_1px_var(--color-line)]',
         className,
       )}
@@ -200,7 +200,7 @@ export function OptionCard({ selected, onClick, title, sub, className, right }: 
 /* ---------- List row with chevron (Profile buttons) ---------- */
 export function RowButton({ icon, label, onClick }: { icon: ReactNode; label: string; onClick?: () => void }) {
   return (
-    <button onClick={onClick} className="flex h-12 w-full items-center gap-2 bg-white px-4 text-left text-sm text-muted transition-colors duration-150 active:bg-bg-2 [@media(hover:hover)]:hover:bg-[#fafafa]">
+    <button onClick={onClick} className="flex h-12 w-full items-center gap-2 bg-bg px-4 text-left text-sm text-muted transition-colors duration-150 active:bg-bg-2 [@media(hover:hover)]:hover:bg-ink/[0.02]">
       <span className="flex text-ink">{icon}</span>
       <span className="flex-1">{label}</span>
       <ChevronRight size={16} strokeWidth={2.25} className="text-ink" />
@@ -211,7 +211,7 @@ export function RowButton({ icon, label, onClick }: { icon: ReactNode; label: st
 /* ---------- Feature line (checked chip inside service cards) ---------- */
 export function FeatureLine({ children, muted }: { children: ReactNode; muted?: boolean }) {
   return (
-    <div className="flex items-center gap-1 rounded-sm border border-line bg-white p-2">
+    <div className="flex items-center gap-1 rounded-sm border border-line bg-bg p-2">
       <Check size={16} strokeWidth={2} className="shrink-0 text-success" />
       <span className={cx('truncate text-xs leading-[1.25]', muted ? 'text-muted' : 'text-ink/70')}>{children}</span>
     </div>
@@ -230,7 +230,7 @@ export function BottomNav() {
   const navigate = useNavigate()
   return (
     <nav
-      className="relative z-10 flex shrink-0 justify-around border-t border-line bg-white px-1 pt-2"
+      className="relative z-10 flex shrink-0 justify-around border-t border-line bg-bg px-1 pt-2"
       style={{ paddingBottom: 'max(37px, calc(env(safe-area-inset-bottom) + 8px))' }}
     >
       {NAV.map((it) => {
@@ -246,7 +246,7 @@ export function BottomNav() {
               {active && (
                 <motion.span layoutId="nav-pill" className="absolute inset-0 rounded-full bg-brand" transition={{ type: 'spring', duration: 0.4, bounce: 0.2 }} />
               )}
-              <img src={it.icon} alt="" width={24} height={24} className="relative" />
+              <img src={it.icon} alt="" width={24} height={24} className={cx('relative transition-[filter] duration-200', !active && 'dark:invert')} />
             </span>
             <span className="text-xs leading-none">{it.label}</span>
           </button>
@@ -269,7 +269,7 @@ export function Sheet({ open, onClose, children, scrim = true, className }: { op
           {scrim && (
             <motion.div
               key="scrim"
-              className="absolute inset-0 z-30 bg-black/40"
+              className="absolute inset-0 z-30 bg-black/40 backdrop-blur-[6px]"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -281,7 +281,7 @@ export function Sheet({ open, onClose, children, scrim = true, className }: { op
             key="sheet"
             role="dialog"
             aria-modal="true"
-            className={cx('absolute inset-x-0 bottom-0 z-40 flex max-h-[94%] flex-col rounded-t-lg bg-white shadow-[0_-8px_32px_rgba(11,13,14,0.12)]', className)}
+            className={cx('absolute inset-x-0 bottom-0 z-40 flex max-h-[94%] flex-col rounded-t-lg bg-bg shadow-[0_-8px_32px_rgba(11,13,14,0.12)]', className)}
             initial={reduce ? { opacity: 0 } : { y: '100%' }}
             animate={reduce ? { opacity: 1 } : { y: 0 }}
             exit={reduce ? { opacity: 0 } : { y: '100%' }}
@@ -371,6 +371,46 @@ export function useCountdown(seconds: number) {
     return () => clearTimeout(t)
   }, [left])
   return [left, () => setLeft(seconds)] as const
+}
+
+/* ---------- Compact segmented control (App Settings: Appearance / Language) ---------- */
+export function Segmented<T extends string>({ items, value, onChange, id, label }: { items: { value: T; label: string; dir?: 'rtl' }[]; value: T; onChange: (v: T) => void; id: string; label: string }) {
+  return (
+    <div role="radiogroup" aria-label={label} className="flex h-9 w-[167px] shrink-0 rounded-md bg-bg-2 p-1">
+      {items.map((it) => {
+        const active = it.value === value
+        return (
+          <button
+            key={it.value}
+            role="radio"
+            aria-checked={active}
+            dir={it.dir}
+            onClick={() => onChange(it.value)}
+            className={cx('relative flex-1 rounded-sm px-3 leading-none transition-colors duration-150', active ? 'text-base font-bold text-ink' : 'text-sm text-muted [@media(hover:hover)]:hover:text-ink')}
+          >
+            {active && (
+              <motion.span
+                layoutId={`seg-pill-${id}`}
+                className="absolute inset-0 rounded-sm bg-bg shadow-[0_1px_2px_rgba(11,13,14,0.06)]"
+                transition={{ type: 'spring', duration: 0.35, bounce: 0.15 }}
+              />
+            )}
+            <span className="relative">{it.label}</span>
+          </button>
+        )
+      })}
+    </div>
+  )
+}
+
+/* ONGO marks: black artwork in light, white artwork in dark (no JS needed) */
+export function ThemedImg({ light, dark, className, ...rest }: { light: string; dark: string; alt: string; width: number; height: number; className?: string }) {
+  return (
+    <>
+      <img src={light} className={cx('dark:hidden', className)} {...rest} />
+      <img src={dark} className={cx('hidden dark:block', className)} {...rest} />
+    </>
+  )
 }
 
 export const SectionLabel = ({ children }: { children: ReactNode }) => <h3 className="text-xs font-bold leading-none">{children}</h3>

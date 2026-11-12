@@ -6,14 +6,13 @@ import flagQa from '../assets/img/flag-qa.png'
 import flagSa from '../assets/img/flag-sa.png'
 import flagKw from '../assets/img/flag-kw.png'
 
-import svcCarExterior from '../assets/icons/svc-car-exterior.svg'
-import svcShine from '../assets/icons/svc-shine.svg'
+import svcCarFront from '../assets/icons/svc-car-front.svg'
+import svcSparkles from '../assets/icons/svc-sparkles.svg'
 import svcWax from '../assets/icons/svc-wax-seal.svg'
 import svcWheels from '../assets/icons/svc-wheels.svg'
 import svcWrench from '../assets/icons/svc-wrench.svg'
 import svcSun from '../assets/icons/svc-sun.svg'
-import svcCat from '../assets/icons/svc-cat.svg'
-import svcPaint from '../assets/icons/svc-paintbrush.svg'
+import svcDog from '../assets/icons/svc-dog.svg'
 import svcThermo from '../assets/icons/svc-thermo.svg'
 
 export type ServiceId = 'express' | 'shine' | 'detailed' | 'custom'
@@ -65,14 +64,14 @@ export const SERVICE_LIST_ORDER: ServiceId[] = ['express', 'detailed', 'shine', 
 export const serviceById = (id: ServiceId) => SERVICES.find((s) => s.id === id)!
 
 export const ADDONS = [
-  { id: 'interior-polish', label: 'Interior polish / shampoo', icon: svcCarExterior },
-  { id: 'interior-clean', label: 'Interior clean', icon: svcShine },
+  { id: 'interior-polish', label: 'Interior polish / shampoo', icon: svcCarFront },
+  { id: 'interior-clean', label: 'Interior clean', icon: svcSparkles },
   { id: 'wax', label: 'Wax & seal', icon: svcWax },
   { id: 'tire', label: 'Tire shine', icon: svcWheels },
   { id: 'engine', label: 'Engine cleaning', icon: svcWrench },
   { id: 'headlights', label: 'Headlights', icon: svcSun },
-  { id: 'pet', label: 'Pet hair removal', icon: svcCat },
-  { id: 'paint', label: 'Paint polishing', icon: svcPaint },
+  { id: 'pet', label: 'Pet hair removal', icon: svcDog },
+  { id: 'paint', label: 'Paint polishing', icon: svcSparkles },
   { id: 'ac', label: 'AC steam cleaning', icon: svcThermo },
 ]
 
@@ -96,6 +95,10 @@ export const CAR_COLORS = [
   { name: 'Other', hex: '#a0e870' },
 ]
 
+/* A car can have up to 3 colours (Figma annotation on Choose color). Stored as "White, Black". */
+export const MAX_CAR_COLORS = 3
+export const parseColors = (v: string) => v.split(',').map((c) => c.trim()).filter(Boolean)
+
 export const COUNTRIES = [
   { code: '+974', name: 'Qatar', flag: flagQa },
   { code: '+966', name: 'Saudi Arabia', flag: flagSa },
@@ -110,6 +113,13 @@ export const LOCATIONS = [
   { id: 'pearl', name: 'Porto Arabia', address: 'The Pearl-Qatar, Doha, Qatar' },
   { id: 'msheireb', name: 'Msheireb Downtown', address: 'Msheireb Street, Doha, Qatar' },
   { id: 'lusail', name: 'Lusail Marina Promenade', address: 'Lusail Marina, Lusail, Qatar' },
+]
+
+/* Areas the pin "resolves" to after the map is dragged (Bottom sheet / Search shows "Arumaila") */
+export const PIN_AREAS = [
+  { id: 'arumaila', name: 'Arumaila', address: 'Arumaila, Doha, Qatar' },
+  { id: 'al-sadd', name: 'Al Sadd', address: 'Al Sadd, Doha, Qatar' },
+  { id: 'west-bay', name: 'West Bay', address: 'West Bay, Doha, Qatar' },
 ]
 
 export const CANCEL_REASONS = [

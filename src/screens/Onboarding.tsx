@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { motion } from 'motion/react'
+import { AnimatePresence, motion } from 'motion/react'
 import { useNavigate } from 'react-router'
 import { ArrowRight, Coins, ShieldCheck, MessageCircle, ChevronRight } from 'lucide-react'
 import { useStore } from '../lib/store'
-import { CAR_COLORS, CAR_TYPES, COUNTRIES, type CarType } from '../lib/data'
-import { Button, Field, Footer, Header, InfoCard, OptionCard, Screen, Scroll, StatusBar, cx, inputBox, useCountdown, useTimeout } from '../components/ui'
+import { CAR_COLORS, CAR_TYPES, COUNTRIES, parseColors, type CarType } from '../lib/data'
+import { Button, Field, Footer, Header, InfoCard, OptionCard, Screen, Scroll, StatusBar, ThemedImg, cx, inputBox, useCountdown, useTimeout } from '../components/ui'
 import { ServicePreview } from '../components/ServicePreview'
 import { ColorSheet } from '../components/Sheets'
 
@@ -20,7 +20,7 @@ export function Loader() {
   const next = () => navigate(state.onboarded ? '/home' : '/auth', { replace: true })
   useTimeout(next, 1800)
   return (
-    <Screen bg="bg-ink">
+    <Screen bg="bg-[#0b0d0e]">
       <button onClick={next} className="flex flex-1 items-center justify-center" aria-label="Continue">
         <motion.img
           src={logoWhite}
@@ -44,7 +44,7 @@ export function Auth() {
       <StatusBar />
       <div className="flex flex-1 flex-col items-center gap-2.5 px-6">
         <div className="flex flex-1 flex-col items-center justify-center gap-4 py-8">
-          <motion.img src={logo} alt="ONGO" width={134} height={132} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }} />
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}><ThemedImg light={logo} dark={logoWhite} alt="ONGO" width={134} height={132} /></motion.div>
           <motion.div className="flex flex-col items-center gap-6 pt-4 text-center" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.08, ease: [0.16, 1, 0.3, 1] }}>
             <h1 className="text-[40px] font-bold leading-[1.1] tracking-[-0.03em] text-balance">Car wash is just one tap away</h1>
             <p className="text-sm opacity-70">Zero friction. Total clarity. Always On Go.</p>
@@ -60,8 +60,8 @@ export function Auth() {
             <span className="opacity-70">or</span>
             <span className="h-px flex-1 bg-line" />
           </div>
-          <Button variant="secondary" lead={<img src={apple} alt="" width={20} height={20} className="[button:hover_&]:invert" />} onClick={() => navigate('/browse')}>Continue with Apple</Button>
-          <Button variant="secondary" lead={<img src={google} alt="" width={20} height={20} className="[button:hover_&]:invert" />} onClick={() => navigate('/browse')}>Continue with Google</Button>
+          <Button variant="secondary" lead={<img src={apple} alt="" width={20} height={20} className="dark:invert [button:hover_&]:invert dark:[button:hover_&]:invert-0" />} onClick={() => navigate('/browse')}>Continue with Apple</Button>
+          <Button variant="secondary" lead={<img src={google} alt="" width={20} height={20} className="[button:hover_&]:invert dark:[button:hover_&]:invert-0" />} onClick={() => navigate('/browse')}>Continue with Google</Button>
           <p className="py-6 text-center text-sm leading-[1.5] opacity-70 text-pretty" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
             By continuing, you agree to our <u>Terms of Service</u> and <u>Privacy Policy.</u>
           </p>
@@ -157,7 +157,7 @@ export function Country() {
             key={c.code}
             onClick={() => setSel(c.code)}
             aria-pressed={sel === c.code}
-            className={cx('flex h-[70px] w-full items-center gap-3 rounded-lg bg-white px-4 text-lg transition-shadow duration-150', sel === c.code ? 'shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'shadow-[inset_0_0_0_1px_var(--color-line)]')}
+            className={cx('flex h-[70px] w-full items-center gap-3 rounded-lg bg-bg px-4 text-lg transition-shadow duration-150', sel === c.code ? 'shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'shadow-[inset_0_0_0_1px_var(--color-line)]')}
           >
             <img src={c.flag} alt="" width={32} height={32} className="size-8 rounded-full object-cover" />
             <span className="opacity-70">{c.code}</span>
@@ -175,13 +175,15 @@ export function Country() {
 /* Signup 2.0 / 2.1 / 2.3 — OTP */
 export function Otp() {
   const navigate = useNavigate()
-  const { state } = useStore()
+  const { state, set } = useStore()
   const [code, setCode] = useState(['', '', '', ''])
+  const [error, setError] = useState(false)
   const refs = useRef<(HTMLInputElement | null)[]>([])
   const [left, restart] = useCountdown(24)
   const done = code.every((c) => c)
 
   const put = (i: number, v: string) => {
+    setError(false)
     const d = v.replace(/\D/g, '')
     if (d.length > 1) { // paste / autofill
       const arr = d.slice(0, 4).split('')
@@ -214,7 +216,7 @@ export function Otp() {
                 onKeyDown={(e) => { if (e.key === 'Backspace' && !code[i] && i > 0) refs.current[i - 1]?.focus() }}
                 className={cx(
                   'h-[74px] min-w-0 flex-1 rounded-[14px] border text-center !text-[28px] font-medium caret-brand-border outline-none transition-[border-color,box-shadow] duration-150 focus:border-ink focus:shadow-[0_0_0_3px_rgba(160,232,112,0.35)]',
-                  c ? 'border-ink' : 'border-line',
+                  error ? 'border-danger focus:border-danger' : c ? 'border-ink' : 'border-line',
                 )}
               />
             ))}
@@ -227,9 +229,27 @@ export function Otp() {
             )}
             <button className="py-2.5">Get it by SMS instead</button>
           </div>
+          <AnimatePresence>
+            {error && (
+              <motion.p role="alert" className="-mt-3 text-sm text-danger" initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+                The code you entered is incorrect. Please try again.
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
       </Scroll>
-      <Footer><Button disabled={!done} onClick={() => navigate('/signup/car')}>Next</Button></Footer>
+      <Footer>
+        <Button
+          disabled={!done || error}
+          onClick={() => {
+            // Demo: "Wrong OTP code" rejects the first attempt, then lets the retry through.
+            if (state.wrongOtp) { set({ wrongOtp: false }); setError(true); setCode(['', '', '', '']); refs.current[0]?.focus(); return }
+            navigate('/signup/car')
+          }}
+        >
+          Next
+        </Button>
+      </Footer>
     </Screen>
   )
 }
@@ -241,7 +261,7 @@ export function CarForm({ title, cta, initial, onSubmit }: { title: string; cta:
   const [color, setColor] = useState(initial?.color ?? '')
   const [type, setType] = useState<CarType | null>(initial?.type ?? null)
   const [colorOpen, setColorOpen] = useState(false)
-  const swatch = CAR_COLORS.find((c) => c.name === color)
+  const swatches = parseColors(color).map((n) => CAR_COLORS.find((c) => c.name === n)!).filter(Boolean)
   const valid = name.trim() && plate.trim() && color && type
 
   return (
@@ -262,7 +282,11 @@ export function CarForm({ title, cta, initial, onSubmit }: { title: string; cta:
               <button type="button" onClick={() => setColorOpen(true)} className={cx(inputBox, 'justify-between text-left')}>
                 <span className={color ? '' : 'text-ink'}>{color || 'Car color'}</span>
                 <span className="flex items-center gap-2">
-                  {swatch ? <span className="size-7 rounded-full border border-[#ddd]" style={{ background: swatch.hex }} /> : (<><span className="size-7 rounded-full border border-[#ddd] bg-white" /><span className="size-7 rounded-full bg-[#222]" /></>)}
+                  {swatches.length ? (
+                    <span className="flex -space-x-2">
+                      {swatches.map((w) => <span key={w.name} className="size-7 rounded-full border border-line ring-2 ring-bg" style={{ background: w.hex }} />)}
+                    </span>
+                  ) : (<><span className="size-7 rounded-full border border-line bg-[#fff]" /><span className="size-7 rounded-full bg-[#222]" /></>)}
                   <ChevronRight size={24} strokeWidth={2} />
                 </span>
               </button>

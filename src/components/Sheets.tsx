@@ -1,31 +1,49 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { Check, X } from 'lucide-react'
-import { CAR_COLORS, CAR_TYPES, type CarType } from '../lib/data'
+import { CAR_COLORS, MAX_CAR_COLORS, parseColors } from '../lib/data'
+import type { Car } from '../lib/store'
 import { Button, OptionCard, Sheet, cx } from './ui'
 
-/* Bottom sheet / Choose Color */
+/* Bottom sheet / Choose Color — multi-select, up to 3 (Figma annotation) */
 export function ColorSheet({ open, value, onClose, onSave }: { open: boolean; value: string; onClose: () => void; onSave: (c: string) => void }) {
-  const [sel, setSel] = useState(value)
-  useEffect(() => { if (open) setSel(value) }, [open, value])
+  const [sel, setSel] = useState<string[]>(() => parseColors(value))
+  const [nudge, setNudge] = useState(0)
+  useEffect(() => { if (open) setSel(parseColors(value)) }, [open, value])
+  const toggle = (name: string) => {
+    if (sel.includes(name)) setSel(sel.filter((c) => c !== name))
+    else if (sel.length < MAX_CAR_COLORS) setSel([...sel, name])
+    else setNudge((n) => n + 1) // at the limit: shake the hint instead of silently ignoring the tap
+  }
   return (
     <Sheet open={open} onClose={onClose}>
       <div className="flex flex-col gap-8 px-6 pb-8" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
-        <div className="grid grid-cols-[60px_1fr_60px] items-center pt-2">
-          <span />
-          <h2 className="text-center text-xl font-semibold">Choose color</h2>
-          <button onClick={() => setSel('')} className="text-right text-sm text-muted">Reset</button>
+        <div className="flex flex-col gap-2 pt-2">
+          <div className="grid grid-cols-[60px_1fr_60px] items-center">
+            <span />
+            <h2 className="text-center text-xl font-semibold">Choose color</h2>
+            <button onClick={() => setSel([])} className="text-right text-sm text-muted">Reset</button>
+          </div>
+          <motion.p
+            key={nudge}
+            className={cx('text-center text-xs tabular', sel.length >= MAX_CAR_COLORS ? 'text-ink' : 'text-muted')}
+            animate={nudge ? { x: [0, -6, 6, -4, 4, 0] } : undefined}
+            transition={{ duration: 0.35 }}
+          >
+            Pick up to {MAX_CAR_COLORS} · {sel.length}/{MAX_CAR_COLORS} selected
+          </motion.p>
         </div>
         <div className="grid grid-cols-4 gap-x-3 gap-y-4">
           {CAR_COLORS.map((c) => {
-            const on = sel === c.name
+            const on = sel.includes(c.name)
             const light = ['White', 'Silver', 'Yellow', 'Other'].includes(c.name)
+            const full = !on && sel.length >= MAX_CAR_COLORS
             return (
-              <button key={c.name} onClick={() => setSel(c.name)} aria-pressed={on} className="flex flex-col items-center gap-1.5 text-xs">
-                <span className={cx('flex size-[72px] items-center justify-center rounded-full transition-transform duration-150 active:scale-95', c.name === 'White' && 'border border-line')} style={{ background: c.hex }}>
+              <button key={c.name} onClick={() => toggle(c.name)} aria-pressed={on} className={cx('flex flex-col items-center gap-1.5 text-xs transition-opacity duration-150', full && 'opacity-40')}>
+                <span className={cx('flex size-[72px] items-center justify-center rounded-full transition-transform duration-150 active:scale-95', c.name === 'White' && 'border border-line', c.name === 'Black' && 'dark:border dark:border-line')} style={{ background: c.hex }}>
                   {on && (
                     <motion.span initial={{ scale: 0.4, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', duration: 0.3, bounce: 0.3 }}>
-                      <Check size={28} strokeWidth={2.25} className={light ? 'text-ink' : 'text-white'} />
+                      <Check size={28} strokeWidth={2.25} className={light ? 'text-[#0b0d0e]' : 'text-white'} />
                     </motion.span>
                   )}
                 </span>
@@ -34,27 +52,37 @@ export function ColorSheet({ open, value, onClose, onSave }: { open: boolean; va
             )
           })}
         </div>
-        <Button size="md" disabled={!sel} onClick={() => onSave(sel)} className="font-bold">Save</Button>
+        <Button size="md" disabled={!sel.length} onClick={() => onSave(sel.join(', '))} className="font-bold">Save</Button>
       </div>
     </Sheet>
   )
 }
 
-/* Bottom sheet / Car type (from Home header chip) */
-export function CarTypeSheet({ open, value, onClose, onSave }: { open: boolean; value: CarType; onClose: () => void; onSave: (t: CarType) => void }) {
+/* Bottom sheet / Car type — picks which garage car the Home prices are for */
+export const carSummary = (c: Car) => `${c.type.startsWith('SUV') ? 'SUV' : c.type} · ${c.type.includes('7') ? 7 : 5} seats · ${c.color}`
+
+export function CarTypeSheet({ open, cars, value, onClose, onSave }: { open: boolean; cars: Car[]; value: string | null; onClose: () => void; onSave: (id: string) => void }) {
   const [sel, setSel] = useState(value)
   useEffect(() => { if (open) setSel(value) }, [open, value])
   return (
     <Sheet open={open} onClose={onClose}>
-      <div className="flex flex-col gap-6 px-6" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
-        <div className="grid grid-cols-[24px_1fr_24px] items-center">
+      <div className="flex flex-col px-6" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
+        <div className="grid grid-cols-[24px_1fr_24px] items-center pb-4">
           <button onClick={onClose} aria-label="Close"><X size={20} strokeWidth={2} /></button>
           <h2 className="text-center text-xl font-semibold">Choose car type</h2>
         </div>
         <div className="flex flex-col gap-3">
-          {CAR_TYPES.map((t) => <OptionCard key={t.type} selected={sel === t.type} onClick={() => setSel(t.type)} title={t.type} sub={t.examples} />)}
+          {cars.map((c) => (
+            <OptionCard
+              key={c.id}
+              selected={sel === c.id}
+              onClick={() => setSel(c.id)}
+              title={<span className="block truncate text-lg">{c.name}</span>}
+              sub={<span className="block truncate">{carSummary(c)}</span>}
+            />
+          ))}
         </div>
-        <Button size="md" className="font-bold" onClick={() => onSave(sel)}>Continue</Button>
+        <div className="pt-7"><Button size="md" className="!h-[49px] !rounded-[7px] font-semibold" disabled={!sel} onClick={() => sel && onSave(sel)}>Continue</Button></div>
       </div>
     </Sheet>
   )
