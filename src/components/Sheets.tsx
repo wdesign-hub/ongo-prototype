@@ -21,8 +21,8 @@ export function ColorSheet({ open, value, onClose, onSave }: { open: boolean; va
         <div className="flex flex-col gap-2 pt-2">
           <div className="grid grid-cols-[60px_1fr_60px] items-center">
             <span />
-            <h2 className="text-center text-xl font-semibold">Choose color</h2>
-            <button onClick={() => setSel([])} className="text-right text-sm text-muted">Reset</button>
+            <h2 className="text-center text-xl font-semibold">Choose colour</h2>
+            <button onClick={() => setSel([])} className="-my-3 py-3 text-right text-sm text-muted">Reset</button>
           </div>
           <motion.p
             key={nudge}
@@ -30,7 +30,7 @@ export function ColorSheet({ open, value, onClose, onSave }: { open: boolean; va
             animate={nudge ? { x: [0, -6, 6, -4, 4, 0] } : undefined}
             transition={{ duration: 0.35 }}
           >
-            Pick up to {MAX_CAR_COLORS} · {sel.length}/{MAX_CAR_COLORS} selected
+            Pick up to {MAX_CAR_COLORS} colours · {sel.length}/{MAX_CAR_COLORS}
           </motion.p>
         </div>
         <div className="grid grid-cols-4 gap-x-3 gap-y-4">
@@ -68,8 +68,8 @@ export function CarTypeSheet({ open, cars, value, onClose, onSave }: { open: boo
     <Sheet open={open} onClose={onClose}>
       <div className="flex flex-col px-6" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
         <div className="grid grid-cols-[24px_1fr_24px] items-center pb-4">
-          <button onClick={onClose} aria-label="Close"><X size={20} strokeWidth={2} /></button>
-          <h2 className="text-center text-xl font-semibold">Choose car type</h2>
+          <button onClick={onClose} aria-label="Close" className="-m-3 p-3"><X size={20} strokeWidth={2} /></button>
+          <h2 className="text-center text-xl font-semibold">Choose your car</h2>
         </div>
         <div className="flex flex-col gap-3">
           {cars.map((c) => (

@@ -147,7 +147,7 @@ export function InfoCard({ tone = 'info', icon, title, children, onClose }: { to
         <span className="flex size-4 shrink-0">{icon}</span>
         <p className="flex-1 text-sm font-bold leading-[1.15]">{title}</p>
         {onClose && (
-          <button onClick={onClose} aria-label="Dismiss" className="-m-2 p-2">
+          <button onClick={onClose} aria-label="Dismiss" className="-m-3.5 p-3.5">
             <CircleX size={16} strokeWidth={2} />
           </button>
         )}
@@ -222,7 +222,7 @@ export function FeatureLine({ children, muted }: { children: ReactNode; muted?: 
 const NAV = [
   { to: '/home', label: 'Home', icon: navHouse, match: ['/home', '/offline'] },
   { to: '/bookings', label: 'Bookings', icon: navCalendar, match: ['/bookings', '/rate'] },
-  { to: '/garage', label: 'My Vehicle', icon: navCar, match: ['/garage'] },
+  { to: '/garage', label: 'Garage', icon: navCar, match: ['/garage'] },
   { to: '/profile', label: 'Profile', icon: navUser, match: ['/profile'] },
 ]
 export function BottomNav() {
@@ -334,13 +334,13 @@ export function EmptyState({ image, title, body, note, children }: { image: stri
 }
 
 /* ---------- Toast ---------- */
-export function Toast({ show, children, icon }: { show: boolean; children: ReactNode; icon?: ReactNode }) {
+export function Toast({ show, children, icon, className }: { show: boolean; children: ReactNode; icon?: ReactNode; className?: string }) {
   return (
     <AnimatePresence>
       {show && (
         <motion.div
           role="status"
-          className="absolute inset-x-6 bottom-[120px] z-50 flex items-center gap-2.5 rounded-md border border-brand-border bg-success-subtle p-3 text-sm"
+          className={cx('absolute inset-x-6 bottom-[120px] z-50 flex items-center gap-2.5 rounded-md border border-brand-border bg-success-subtle p-3 text-sm', className)}
           initial={{ opacity: 0, y: 12, scale: 0.98 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 8 }}

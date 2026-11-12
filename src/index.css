@@ -9,9 +9,9 @@
   --font-sans: "Inter Variable", "Inter", ui-sans-serif, system-ui, sans-serif;
 
   --color-ink: #0b0d0e;            /* text/primary, icon/icon-color */
-  --color-muted: #78797a;          /* text/secondary */
-  --color-muted-2: #767676;
-  --color-danger: #f04438;         /* text/danger, border/danger */
+  --color-muted: #6b6c6d;          /* text/secondary (gray/250) */
+  --color-muted-2: #6b6c6d;
+  --color-danger: #d92d20;         /* text/danger (red-600) */
   --color-success: #12b76a;        /* text/success */
 
   --color-bg: #ffffff;             /* background/background */
@@ -53,6 +53,7 @@
 [data-theme=dark] {
   color-scheme: dark;
   --color-ink: #ffffff;
+  --color-danger: #f04438;
   --color-muted: #78797a;
   --color-muted-2: #8a8b8c;
   --color-bg: #0b0d0e;

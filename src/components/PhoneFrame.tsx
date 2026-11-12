@@ -100,7 +100,7 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
             <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted">Demo data</p>
             {toggle('Has vehicles', state.cars.length > 0, () => set((s) => ({ cars: s.cars.length ? [] : [{ id: 'c1', name: 'Lamborghini Jr.', plate: '000000', color: 'White', type: 'Sedan' }], primaryCarId: s.cars.length ? null : 'c1' })))}
             {toggle('Has payment methods', state.payments.length > 0, () => set((s) => ({ payments: s.payments.length ? [] : DEMO_PAYMENTS, primaryPaymentId: s.payments.length ? null : 'p1' })))}
-            {toggle('Has recent bookings', state.recent.length > 0, () => set((s) => ({ recent: s.recent.length ? [] : [{ id: 'r1', service: 'express' }, { id: 'r2', service: 'shine' }, { id: 'r3', service: 'express' }] })))}
+            {toggle('Has recent bookings', state.recent.length > 0, () => set((s) => ({ recent: s.recent.length ? [] : [{ id: 'r1', service: 'express', when: 'Today, 12:04', car: 'Lamborghini Jr.' }, { id: 'r2', service: 'shine', when: '28 Oct', car: 'Land Cruiser House' }, { id: 'r3', service: 'express', when: '21 Oct', car: 'Lamborghini Jr.' }] })))}
             {toggle('Has notifications', state.showNotifications, () => set((s) => ({ showNotifications: !s.showNotifications, dismissedNotifications: [] })))}
             {toggle('Next payment fails', state.failPayment, () => set((s) => ({ failPayment: !s.failPayment })))}
             {toggle('No washer available', state.noWasher, () => set((s) => ({ noWasher: !s.noWasher })))}

@@ -82,8 +82,8 @@ export function Browse() {
         <div className="flex flex-col gap-7">
           <h1 className="text-[32px] font-bold leading-[1.3] text-pretty">See what a wash costs before you sign up.</h1>
           <ServicePreview titleSize={20} priceSize={48} />
-          <InfoCard tone="info" icon={<ShieldCheck size={16} strokeWidth={2} className="text-success" />} title="Every vendor is licence-verified">
-            Trade licence, CR and Qatar ID checked before a vendor can take a booking.
+          <InfoCard tone="info" icon={<ShieldCheck size={16} strokeWidth={2} className="text-success" />} title="Every washer is licence-verified">
+            Trade licence, CR and Qatar ID checked before a washer can take a booking.
           </InfoCard>
         </div>
       </Scroll>
@@ -127,8 +127,8 @@ export function Phone() {
           {!valid && <p className="text-sm opacity-60">Your number stays private and is only used for booking updates.</p>}
           {valid && (
             <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
-              <InfoCard tone="success" icon={<MessageCircle size={16} strokeWidth={2} />} title="We’ll send your code on WhatsApp">
-                Most people in Qatar get it faster there. Prefer SMS? You can switch on the next screen.
+              <InfoCard tone="success" icon={<MessageCircle size={16} strokeWidth={2} />} title="We’ll text you a 4-digit code">
+                It usually arrives in a few seconds.
               </InfoCard>
             </motion.div>
           )}
@@ -223,11 +223,11 @@ export function Otp() {
           </div>
           <div className="flex items-center justify-between text-xs">
             {left > 0 ? (
-              <span className="tabular opacity-50">Resend in 0:{String(left).padStart(2, '0')}</span>
+              <span className="tabular text-muted">Resend in 0:{String(left).padStart(2, '0')}</span>
             ) : (
-              <button onClick={() => { restart(); setCode(['', '', '', '']); refs.current[0]?.focus() }} className="py-2.5 underline underline-offset-2">Resend</button>
+              <button onClick={() => { restart(); setCode(['', '', '', '']); refs.current[0]?.focus() }} className="-mx-2 min-h-11 px-2 underline underline-offset-2">Resend</button>
             )}
-            <button className="py-2.5">Get it by SMS instead</button>
+            <button onClick={() => navigate('/signup/phone')} className="-mx-2 min-h-11 px-2">Change number</button>
           </div>
           <AnimatePresence>
             {error && (
@@ -278,9 +278,9 @@ export function CarForm({ title, cta, initial, onSubmit }: { title: string; cta:
             <Field label="Plate number">
               <span className={inputBox}><b>Q</b><input inputMode="numeric" value={plate} onChange={(e) => setPlate(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" className="w-full bg-transparent pl-1 tracking-wide outline-none placeholder:text-muted" /></span>
             </Field>
-            <Field label="Car color">
+            <Field label="Car colour">
               <button type="button" onClick={() => setColorOpen(true)} className={cx(inputBox, 'justify-between text-left')}>
-                <span className={color ? '' : 'text-ink'}>{color || 'Car color'}</span>
+                <span className={color ? '' : 'text-ink'}>{color || 'Car colour'}</span>
                 <span className="flex items-center gap-2">
                   {swatches.length ? (
                     <span className="flex -space-x-2">

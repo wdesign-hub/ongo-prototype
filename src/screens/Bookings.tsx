@@ -169,9 +169,9 @@ export function BookingsRecent() {
                   className="flex min-h-20 w-full items-center gap-2 rounded-lg bg-bg py-3 pl-2 pr-4 text-left shadow-[inset_0_0_0_1px_var(--color-line)] transition-transform active:scale-[0.985]"
                 >
                   <img src={s.icon} alt="" width={56} height={56} className="size-14 object-contain" />
-                  <span className="flex flex-1 flex-col gap-2">
+                  <span className="flex min-w-0 flex-1 flex-col gap-2">
                     <span className="font-bold leading-none">{s.listName}</span>
-                    <span className="text-sm leading-none text-muted">{s.duration}</span>
+                    <span className="text-sm leading-snug text-muted">{r.when && r.car ? `${r.when} · ${r.car}` : s.duration}</span>
                   </span>
                   <span className="text-sm">{s.price} QAR</span>
                   <RefreshCcw size={22} strokeWidth={1.75} aria-label="Book again" className="ml-2" />

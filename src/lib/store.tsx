@@ -14,7 +14,7 @@ export type Booking = {
   status: 'searching' | 'active'
   createdAt: number
 }
-export type PastBooking = { id: string; service: ServiceId }
+export type PastBooking = { id: string; service: ServiceId; when?: string; car?: string }
 export type ThemePref = 'system' | 'light' | 'dark'
 
 export type AppState = {
@@ -52,11 +52,7 @@ const SEED: AppState = {
   payments: [],
   primaryPaymentId: null,
   booking: null,
-  recent: [
-    { id: 'r1', service: 'express' },
-    { id: 'r2', service: 'shine' },
-    { id: 'r3', service: 'express' },
-  ],
+  recent: [{ id: 'r1', service: 'express', when: 'Today, 12:04', car: 'Lamborghini Jr.' }, { id: 'r2', service: 'shine', when: '28 Oct', car: 'Land Cruiser House' }, { id: 'r3', service: 'express', when: '21 Oct', car: 'Lamborghini Jr.' }],
   notifications: true,
   showNotifications: true,
   dismissedNotifications: [],

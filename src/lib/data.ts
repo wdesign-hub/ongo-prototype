@@ -13,6 +13,7 @@ import svcWheels from '../assets/icons/svc-wheels.svg'
 import svcWrench from '../assets/icons/svc-wrench.svg'
 import svcSun from '../assets/icons/svc-sun.svg'
 import svcDog from '../assets/icons/svc-dog.svg'
+import svcSprayCan from '../assets/icons/svc-spray-can.svg'
 import svcThermo from '../assets/icons/svc-thermo.svg'
 
 export type ServiceId = 'express' | 'shine' | 'detailed' | 'custom'
@@ -31,35 +32,36 @@ export type Service = {
   detailFeatures: string[]
 }
 
+// Fixed sedan pricing (SUV: 55 / 85 / 160 QAR — not shown in the designs yet)
 export const SERVICES: Service[] = [
   {
     id: 'express', tab: 'Express', title: 'Express Wash', listName: 'Express', detailName: 'Express',
     duration: '25–35 min', price: 45, icon: clock3d, recommended: true,
-    features: ['Exterior wash', 'Interior vacuum', 'Dashboard wipe', 'Tire cleaning'],
-    detailFeatures: ['Full exterior wash', 'Interior vacuum, dusting and cleaning', 'Light interior shine with special products', 'Tire and wheel wash and shine'],
+    features: ['Exterior wash', 'Interior vacuum', 'Dashboard wipe', 'Tyre cleaning'],
+    detailFeatures: ['Exterior wash', 'Interior vacuum', 'Dashboard wipe', 'Tyre cleaning'],
   },
   {
-    id: 'shine', tab: 'Shine', title: 'Shine', listName: 'Shine', detailName: 'ONGO Shine',
-    duration: '40–60 min', price: 120, icon: car3d,
-    features: ['Everything in Express Wash', 'Wax shampoo', 'Interior shine', 'Tire shine'],
-    detailFeatures: ['Full exterior wash', 'Interior vacuum, dusting and cleaning', 'Light interior shine with special products', 'Tire and wheel wash and shine'],
+    id: 'shine', tab: 'Shine', title: 'Shine', listName: 'Shine', detailName: 'Shine',
+    duration: '40–60 min', price: 70, icon: car3d,
+    features: ['Everything in Express', 'Wax shampoo', 'Interior shine', 'Tyre shine'],
+    detailFeatures: ['Everything in Express', 'Wax shampoo', 'Interior shine', 'Tyre shine'],
   },
   {
     id: 'detailed', tab: 'Detailed', title: 'Detailed Wash', listName: 'Detailed', detailName: 'Detailed',
-    duration: '60–120 min', price: 70, icon: wheel3d,
-    features: ['Everything in Express Wash', 'Deep interior cleaning', 'Upholstery', 'Light polish / wax', 'Rim detailing'],
-    detailFeatures: ['Full exterior wash', 'Interior vacuum, dusting and cleaning', 'Light interior shine with special products', 'Tire and wheel wash and shine'],
+    duration: '60–90 min', price: 120, icon: wheel3d,
+    features: ['Everything in Shine', 'Deep interior cleaning & upholstery', 'Light polish / wax', 'Rim detailing'],
+    detailFeatures: ['Everything in Shine', 'Deep interior cleaning & upholstery', 'Light polish / wax', 'Rim detailing'],
   },
   {
     id: 'custom', tab: 'Custom', title: 'Custom', listName: 'Custom', detailName: 'Custom',
     duration: 'Time varies', price: null, icon: cube3d,
-    features: ['Everything in Detailed Wash', 'Build your own package'],
+    features: ['Everything in Express, plus add-ons', 'Build your own package'],
     detailFeatures: ['Everything in Express, plus add-ons'],
   },
 ]
 
 // Order used by the "Choose a service" sheet in Figma (Booking 1.2)
-export const SERVICE_LIST_ORDER: ServiceId[] = ['express', 'detailed', 'shine', 'custom']
+export const SERVICE_LIST_ORDER: ServiceId[] = ['express', 'shine', 'detailed', 'custom']
 
 export const serviceById = (id: ServiceId) => SERVICES.find((s) => s.id === id)!
 
@@ -67,11 +69,11 @@ export const ADDONS = [
   { id: 'interior-polish', label: 'Interior polish / shampoo', icon: svcCarFront },
   { id: 'interior-clean', label: 'Interior clean', icon: svcSparkles },
   { id: 'wax', label: 'Wax & seal', icon: svcWax },
-  { id: 'tire', label: 'Tire shine', icon: svcWheels },
+  { id: 'tire', label: 'Tyre shine', icon: svcWheels },
   { id: 'engine', label: 'Engine cleaning', icon: svcWrench },
   { id: 'headlights', label: 'Headlights', icon: svcSun },
   { id: 'pet', label: 'Pet hair removal', icon: svcDog },
-  { id: 'paint', label: 'Paint polishing', icon: svcSparkles },
+  { id: 'paint', label: 'Paint polishing', icon: svcSprayCan },
   { id: 'ac', label: 'AC steam cleaning', icon: svcThermo },
 ]
 
@@ -126,7 +128,7 @@ export const CANCEL_REASONS = [
   'My plans changed',
   'Found it cheaper elsewhere',
   'Booked the wrong time or vehicle',
-  'Vendor was unresponsive',
+  'Washer was unresponsive',
   'Something else',
 ]
 
@@ -134,7 +136,7 @@ export const FEEDBACK_TAGS = ['Spotless', 'On time', 'Friendly', 'Missed spots',
 
 export const NOTIFICATIONS = [
   { id: 'n1', icon: 'pin' as const, title: 'Marina Walkway promo', body: 'Earn Ooredoo points when you wash your car at Marina Walkway today.' },
-  { id: 'n2', icon: 'logo' as const, title: 'New promotions', body: 'Get 20% off your first wash in the app.', isNew: true },
+  { id: 'n2', icon: 'logo' as const, title: '20% off your first wash', body: 'Book any wash in the app to claim it.', isNew: true },
   { id: 'n3', icon: 'pin' as const, title: 'Run ONGO Run', body: 'Join us for a run at Mall of Qatar at 7 AM. Wear your favourite running shoes.' },
 ]
 
@@ -145,5 +147,5 @@ export const TIMELINE = [
   { title: 'On the way', time: '2:11', sub: 'Left Al Sadd · 14 min away' },
   { title: 'Arrived & locating your car', time: '~2:30' },
   { title: 'Wash in progress', time: '~2:32' },
-  { title: 'Done' },
+  { title: 'Wash complete' },
 ]

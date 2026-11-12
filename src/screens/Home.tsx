@@ -66,7 +66,7 @@ function ProgressCard() {
     <div className="flex flex-col gap-4 rounded-lg border border-line bg-bg p-4">
       <div className="flex items-center justify-between">
         <p className="text-sm font-bold">{label}</p>
-        <Badge>{searching ? 'Pending' : b.stage >= 5 ? 'Done' : 'Accepted'}</Badge>
+        <Badge>{searching ? 'Pending' : b.stage >= 5 ? 'Done' : 'On the way'}</Badge>
       </div>
       <div className="flex h-[42px] items-center gap-2">
         {steps.map((Icon, i) => (
@@ -86,8 +86,8 @@ function ProgressCard() {
         ))}
       </div>
       <div className="flex flex-col gap-1 text-sm leading-[1.5]">
-        <p>Car wash confirmed</p>
-        <p className="text-muted">We’ve received your request and will keep you updated.</p>
+        <p>{searching ? 'Car wash requested' : b.stage >= 5 ? 'Wash complete' : 'Washer assigned'}</p>
+        <p className="text-muted">{searching ? 'We’ve received your request and will keep you updated.' : 'We’ll keep you updated until your car is done.'}</p>
       </div>
       <Button variant="tertiary" size="sm" onClick={() => navigate(searching ? '/book/confirm' : '/bookings')}>Track your service</Button>
     </div>

@@ -34,7 +34,7 @@ export function ServicePreview({ titleSize = 18, priceSize = 36 }: { titleSize?:
                   <span className="pt-2 text-lg font-bold">Price varies</span>
                 ) : (
                   <>
-                    <span className="pb-0.5 text-sm opacity-50">QAR</span>
+                    <span className="pb-0.5 text-sm text-muted">QAR</span>
                     <span className="tabular font-bold tracking-[-0.03em]" style={{ fontSize: priceSize, lineHeight: 0.8 }}>{s.price}</span>
                   </>
                 )}

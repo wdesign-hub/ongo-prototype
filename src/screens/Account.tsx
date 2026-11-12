@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion, useMotionValue, useTransform } from 'motion/react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { Bell, ChevronRight, CircleCheck, Cog, CreditCard, LogOut, MailOpen, MapPin, Phone, Plus, ShieldCheck, ShieldQuestion, Trash2, UserX } from 'lucide-react'
@@ -96,9 +96,9 @@ export function Profile() {
           <section className="flex flex-col gap-3">
             <SectionLabel>Payment and settings</SectionLabel>
             <div className="overflow-hidden rounded-lg">
-              <RowButton icon={<Cog size={16} strokeWidth={2} />} label="App Settings" onClick={() => navigate('/settings')} />
+              <RowButton icon={<Cog size={16} strokeWidth={2} />} label="App settings" onClick={() => navigate('/settings')} />
               <RowButton icon={<Bell size={16} strokeWidth={2} />} label="Notifications" onClick={() => navigate('/notifications')} />
-              <RowButton icon={<CreditCard size={16} strokeWidth={2} />} label="Payment Methods" onClick={() => navigate('/payments')} />
+              <RowButton icon={<CreditCard size={16} strokeWidth={2} />} label="Payment methods" onClick={() => navigate('/payments')} />
             </div>
           </section>
 
@@ -108,7 +108,7 @@ export function Profile() {
               {primaryCar ? (
                 <span className="flex flex-1 flex-col gap-3">
                   <span className="flex items-center gap-2 text-xs text-muted">{primaryCar.type.startsWith('SUV') ? 'SUV' : primaryCar.type}<Badge tone="brand">Primary</Badge></span>
-                  <span className="text-sm">{primaryCar.color} · QA{primaryCar.plate}</span>
+                  <span className="text-sm">{primaryCar.color} · Q {primaryCar.plate}</span>
                 </span>
               ) : <span className="flex-1 py-2 text-sm text-muted">No vehicles yet</span>}
               <ChevronRight size={16} strokeWidth={2.25} />
@@ -197,23 +197,23 @@ export function Settings() {
   const row = 'flex items-center gap-2 bg-bg px-4 py-3 text-sm leading-[1.5]'
   return (
     <Screen bg="bg-bg-2">
-      <div className="bg-bg"><StatusBar tall /><Header title="App Settings" /></div>
+      <div className="bg-bg"><StatusBar tall /><Header title="App settings" /></div>
       <Scroll>
         <div className="flex flex-col gap-4 px-5 pb-12 pt-7">
           <div className="flex flex-col overflow-hidden rounded-lg">
             <div className={row}><span className="flex-1">Push notifications</span><Toggle label="Push notifications" on={s.push} onChange={(v) => set({ settings: { ...s, push: v } })} /></div>
-            <div className={row}><span className="flex-1 text-muted">Biometric lock</span><Toggle label="Biometric lock" on={s.biometric} onChange={(v) => set({ settings: { ...s, biometric: v } })} /></div>
+            <div className={row}><span className="flex-1">Biometric lock</span><Toggle label="Biometric lock" on={s.biometric} onChange={(v) => set({ settings: { ...s, biometric: v } })} /></div>
             <div className={row}>
-              <span className="flex-1 text-muted">Appearance</span>
+              <span className="flex-1">Appearance</span>
               <Segmented id="appearance" label="Appearance" value={resolvedTheme} onChange={(v) => set({ theme: v })} items={[{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }]} />
             </div>
             <div className={row}>
-              <span className="flex-1 text-muted">Language</span>
+              <span className="flex-1">Language</span>
               <Segmented id="language" label="Language" value={s.language} onChange={(v) => set({ settings: { ...s, language: v } })} items={[{ value: 'en', label: 'English' }, { value: 'ar', label: 'العربية', dir: 'rtl' }]} />
             </div>
           </div>
           <div className="flex flex-col overflow-hidden rounded-lg">
-            <button className={cx(row, 'text-left transition-colors active:bg-ink/[0.03]')}><span className="flex-1">Terms &amp; privacy</span><ChevronRight size={16} strokeWidth={2.25} /></button>
+            <button className={cx(row, 'text-left transition-colors active:bg-ink/[0.03]')}><span className="flex-1">Terms of Service and Privacy Policy</span><ChevronRight size={16} strokeWidth={2.25} /></button>
             <p className={row}><span className="flex-1">App version</span><span className="text-[13px] text-muted-2">1.4.2</span></p>
           </div>
         </div>
@@ -263,6 +263,15 @@ export function Notifications() {
   const { state, set } = useStore()
   const list = NOTIFICATIONS.filter((n) => !state.dismissedNotifications.includes(n.id))
   const empty = !state.showNotifications || list.length === 0
+  // Undo toast after swipe-to-delete (Figma: Notifications – Deleted)
+  const [undoId, setUndoId] = useState<string | null>(null)
+  useEffect(() => {
+    if (!undoId) return
+    const t = setTimeout(() => setUndoId(null), 4000)
+    return () => clearTimeout(t)
+  }, [undoId])
+  const remove = (id: string) => { set((s) => ({ dismissedNotifications: [...s.dismissedNotifications, id] })); setUndoId(id) }
+  const undo = () => { if (undoId) set((s) => ({ dismissedNotifications: s.dismissedNotifications.filter((x) => x !== undoId) })); setUndoId(null) }
   return (
     <Screen>
       <StatusBar />
@@ -273,7 +282,7 @@ export function Notifications() {
         <Scroll>
           <AnimatePresence initial={false}>
             {list.map((n, i) => (
-              <SwipeRow key={n.id} onDelete={() => set((s) => ({ dismissedNotifications: [...s.dismissedNotifications, n.id] }))}>
+              <SwipeRow key={n.id} onDelete={() => remove(n.id)}>
                 <motion.div className="flex gap-3 px-6" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05, duration: 0.3 }}>
                   <span className="flex w-6 shrink-0 items-center">{n.icon === 'logo' ? <ThemedImg light={symbol} dark={symbolWhite} alt="" width={24} height={24} /> : <MapPin size={24} strokeWidth={1.75} />}</span>
                   <div className="flex flex-1 flex-col gap-3 border-b border-line py-6">
@@ -286,6 +295,10 @@ export function Notifications() {
           </AnimatePresence>
         </Scroll>
       )}
+      <Toast show={!!undoId} className="bottom-12" icon={<CircleCheck size={16} strokeWidth={2} className="text-success" />}>
+        <span className="flex-1">Notification deleted</span>
+        <button onClick={undo} className="-my-3 py-3 font-semibold underline underline-offset-2">Undo</button>
+      </Toast>
     </Screen>
   )
 }
@@ -302,7 +315,7 @@ export function Payments() {
   return (
     <Screen>
       <StatusBar />
-      <Header title="Payment Methods" icon={fromBooking ? 'close' : 'back'} />
+      <Header title="Payment methods" icon={fromBooking ? 'close' : 'back'} />
       {list.length === 0 && !fromBooking ? (
         <EmptyState image={illCard} title="No payment methods yet" body="Add a card or Apple Pay to book and pay for washes in one tap." note="Card details are encrypted and stored securely.">
           <Button onClick={() => navigate('/payments/add')}>Add payment method</Button>
@@ -310,7 +323,7 @@ export function Payments() {
       ) : (
         <Scroll>
           <div className="flex flex-col gap-4 px-6 pt-7">
-            {fromBooking && list.length === 0 && <p className="text-sm text-muted">Payment Methods</p>}
+            {fromBooking && list.length === 0 && <p className="text-sm text-muted">Choose how to pay</p>}
             {list.map((p) => {
               const primary = p.id === state.primaryPaymentId
               return (
@@ -352,7 +365,7 @@ export function AddCard() {
   return (
     <Screen>
       <StatusBar />
-      <Header title="Card details" icon={params.get('from') === 'booking' ? 'close' : 'back'} />
+      <Header title="Add card" icon={params.get('from') === 'booking' ? 'close' : 'back'} />
       <Scroll>
         <div className="flex flex-col gap-6 px-4 py-7">
           <div className="flex flex-col gap-4">

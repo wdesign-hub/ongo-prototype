@@ -86,7 +86,7 @@ function SheetTitle({ icon, onIcon, children }: { icon?: 'back' | 'close'; onIco
   return (
     <div className="grid grid-cols-[20px_1fr_20px] items-center gap-4">
       {icon ? (
-        <button onClick={onIcon} aria-label={icon === 'close' ? 'Close' : 'Back'} className="-m-2 p-2">
+        <button onClick={onIcon} aria-label={icon === 'close' ? 'Close' : 'Back'} className="-m-3 p-3">
           {icon === 'close' ? <X size={20} strokeWidth={2} /> : <ArrowLeft size={20} strokeWidth={2} />}
         </button>
       ) : <span />}
@@ -131,7 +131,7 @@ function LocateStep({ go, onBack, area, onConfirm }: { go: (s: Step) => void; on
     <>
       <div className="flex flex-col items-center gap-3 px-6 py-4 text-center">
         <h2 className="text-2xl font-bold leading-none">Set your location</h2>
-        <p className="text-sm text-muted opacity-70">Drag map to move pin</p>
+        <p className="text-sm text-muted">Drag map to move pin</p>
       </div>
       <div className="h-px bg-line" />
       <div className="flex flex-col gap-3 px-6 py-4" style={{ paddingBottom: 'max(24px, env(safe-area-inset-bottom))' }}>
@@ -148,7 +148,7 @@ function LocateStep({ go, onBack, area, onConfirm }: { go: (s: Step) => void; on
         </button>
         {area
           ? <Button className="!h-[49px] !rounded-[7px] font-semibold" onClick={onConfirm}>Confirm location</Button>
-          : <Button className="!h-[49px] !rounded-[7px] font-semibold" onClick={() => go('service')}>Search for a location</Button>}
+          : <Button className="!h-[49px] !rounded-[7px] font-semibold" onClick={() => go('service')}>Confirm location</Button>}
         <button onClick={onBack} className="sr-only">Back</button>
       </div>
     </>
@@ -207,7 +207,7 @@ function ServiceRow({ id, selected, onClick }: { id: ServiceId; selected: boolea
       <img src={s.icon} alt="" width={56} height={56} className="size-14 object-contain" />
       <span className="flex flex-1 flex-col items-start gap-2">
         <span className="text-base font-bold leading-none">{s.listName}</span>
-        <span className="text-sm leading-none text-muted">{id === 'custom' ? 'Custom bundles from vendors' : s.duration}</span>
+        <span className="text-sm leading-snug text-muted">{id === 'custom' ? 'Everything in Express, plus add-ons' : s.duration}</span>
         {s.recommended && <Badge tone="dark">Recommended</Badge>}
       </span>
       {s.price !== null ? (
@@ -275,7 +275,7 @@ function AddonsStep({ go, onPay }: { go: (s: Step) => void; onPay: () => void })
   const { state } = useStore()
   return (
     <div className="flex flex-col gap-6 px-6">
-      <div className="pb-4"><SheetTitle icon="back" onIcon={() => go('service')}>Build your package</SheetTitle></div>
+      <div className="pb-4"><SheetTitle icon="back" onIcon={() => go('service')}>Choose add-ons</SheetTitle></div>
       <AddonGrid />
       <PayBlock onPay={onPay} disabled={state.draft.addons.length === 0} />
     </div>
