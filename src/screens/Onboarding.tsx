@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useNavigate } from 'react-router'
 import { ArrowRight, Coins, ShieldCheck, MessageCircle, ChevronRight } from 'lucide-react'
@@ -124,7 +124,7 @@ export function Phone() {
               />
             </div>
           </div>
-          {!valid && <p className="text-sm opacity-60">Your number stays private and is only used for booking updates.</p>}
+          {!valid && <p className="text-sm opacity-60">We use it to sign you in and send booking updates. It stays private.</p>}
           {valid && (
             <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
               <InfoCard tone="success" icon={<MessageCircle size={16} strokeWidth={2} />} title="We’ll text you a 4-digit code">
@@ -255,7 +255,7 @@ export function Otp() {
 }
 
 /* Car info (shared by onboarding "Car Info" and Garage 1.1) */
-export function CarForm({ title, cta, initial, onSubmit }: { title: string; cta: string; initial?: { name: string; plate: string; color: string; type: CarType }; onSubmit: (v: { name: string; plate: string; color: string; type: CarType }) => void }) {
+export function CarForm({ title, cta, initial, onSubmit, extra }: { title: string; cta: string; initial?: { name: string; plate: string; color: string; type: CarType }; onSubmit: (v: { name: string; plate: string; color: string; type: CarType }) => void; extra?: ReactNode }) {
   const [name, setName] = useState(initial?.name ?? '')
   const [plate, setPlate] = useState(initial?.plate ?? '')
   const [color, setColor] = useState(initial?.color ?? '')
@@ -273,7 +273,7 @@ export function CarForm({ title, cta, initial, onSubmit }: { title: string; cta:
           <h1 className="text-[28px] font-bold leading-none">{title}</h1>
           <div className="flex flex-col gap-6">
             <Field label="Name your car">
-              <span className={inputBox}><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Lamborghini Jr." className="w-full bg-transparent outline-none placeholder:text-muted" /></span>
+              <span className={inputBox}><input value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Family SUV" className="w-full bg-transparent outline-none placeholder:text-muted" /></span>
             </Field>
             <Field label="Plate number">
               <span className={inputBox}><b>Q</b><input inputMode="numeric" value={plate} onChange={(e) => setPlate(e.target.value.replace(/\D/g, '').slice(0, 6))} placeholder="000000" className="w-full bg-transparent pl-1 tracking-wide outline-none placeholder:text-muted" /></span>
@@ -296,9 +296,10 @@ export function CarForm({ title, cta, initial, onSubmit }: { title: string; cta:
               {CAR_TYPES.map((t) => <OptionCard key={t.type} selected={type === t.type} onClick={() => setType(t.type)} title={t.type} sub={t.examples} />)}
             </div>
           </div>
-          <InfoCard tone="warning" icon={<Coins size={16} strokeWidth={2} />} title="A larger vehicle affects the price">
-            The amount of work varies based on what type of car you have.
+          <InfoCard tone="warning" icon={<Coins size={16} strokeWidth={2} />} title="SUVs cost a little more">
+            Bigger cars take longer to wash, so SUV prices are higher.
           </InfoCard>
+          {extra}
         </div>
       </Scroll>
       <Footer><Button disabled={!valid} onClick={() => onSubmit({ name, plate, color, type: type! })}>{cta}</Button></Footer>
@@ -313,7 +314,7 @@ export function CarInfo() {
   return (
     <CarForm
       title="Add your car details"
-      cta="Done"
+      cta="Save and continue"
       onSubmit={(v) => {
         set({ cars: [{ id: 'c1', ...v }], primaryCarId: 'c1', savedCarBanner: true, onboarded: true })
         navigate('/welcome', { replace: true })

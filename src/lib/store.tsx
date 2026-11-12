@@ -11,10 +11,24 @@ export type Booking = {
   location: string
   when: string | null // null = now
   stage: BookingStage
-  status: 'searching' | 'active'
+  status: 'scheduled' | 'searching' | 'active'
   createdAt: number
+  total?: number
+  carId?: string | null
+  paymentId?: string | null
+  notes?: string
 }
-export type PastBooking = { id: string; service: ServiceId; when?: string; car?: string }
+export type PastBooking = {
+  id: string
+  service: ServiceId
+  when?: string
+  car?: string
+  addons?: string[]
+  carType?: string
+  location?: string
+  total?: number
+  payment?: string
+}
 export type ThemePref = 'system' | 'light' | 'dark'
 
 export type AppState = {
@@ -32,7 +46,7 @@ export type AppState = {
   settings: { push: boolean; biometric: boolean; language: 'en' | 'ar' }
   theme: ThemePref
   savedCarBanner: boolean
-  draft: { service: ServiceId; addons: string[]; location: string | null; when: string | null }
+  draft: { service: ServiceId; addons: string[]; location: string | null; when: string | null; notes?: string }
   offline: boolean
   failPayment: boolean
   noWasher: boolean
@@ -59,7 +73,7 @@ const SEED: AppState = {
   settings: { push: true, biometric: false, language: 'en' },
   theme: 'system',
   savedCarBanner: true,
-  draft: { service: 'express', addons: ['wax', 'engine'], location: null, when: null },
+  draft: { service: 'express', addons: [], location: null, when: null, notes: '' },
   offline: false,
   failPayment: false,
   noWasher: false,

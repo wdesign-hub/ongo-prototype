@@ -7,6 +7,7 @@ import { Home, Offline } from './screens/Home'
 import { BookingConfirm, BookingDetails, BookingMap, CancelReason, Cancelling, NoWasher } from './screens/Booking'
 import { BookingsCurrent, BookingsRecent, Rate, Thanks } from './screens/Bookings'
 import { AddCard, Garage, GarageEdit, Notifications, Payments, Profile, ProfileEdit, Settings } from './screens/Account'
+import { Cancelled, Receipt, Review, Scheduled } from './screens/Checkout'
 
 // Tab roots swap with a plain dissolve (Figma: DISSOLVE); stacked screens slide a little in the push direction.
 const TAB_ROOTS = ['/home', '/bookings', '/bookings/recent', '/garage', '/profile', '/offline']
@@ -48,7 +49,11 @@ function AnimatedRoutes() {
           <Route path="/offline" element={<Offline />} />
           <Route path="/book" element={<BookingMap />} />
           <Route path="/book/details" element={<BookingDetails />} />
+          <Route path="/book/review" element={<Review />} />
+          <Route path="/book/scheduled" element={<Scheduled />} />
           <Route path="/book/confirm" element={<BookingConfirm />} />
+          <Route path="/book/cancelled" element={<Cancelled />} />
+          <Route path="/receipt/:id" element={<Receipt />} />
           <Route path="/book/cancel" element={<CancelReason />} />
           <Route path="/book/cancelling" element={<Cancelling />} />
           <Route path="/book/no-washer" element={<NoWasher />} />

@@ -27,12 +27,12 @@ const TitleBar = ({ title }: { title: string }) => (
 /* ---------- Garage ---------- */
 export function Garage() {
   const navigate = useNavigate()
-  const { state, set } = useStore()
+  const { state } = useStore()
   return (
     <Screen bg="bg-bg-2">
       <div className="bg-bg"><StatusBar tall /><TitleBar title="Garage" /></div>
       {state.cars.length === 0 ? (
-        <EmptyState image={illCar} title="No vehicles yet" body="Add your car once and we'll price every wash for its size." note="Takes less than a minute.">
+        <EmptyState image={illCar} title="No vehicles yet" body="Add your car once and we’ll price every wash for its size." note="Takes less than a minute.">
           <Button onClick={() => navigate('/garage/new')}>Add a vehicle</Button>
         </EmptyState>
       ) : (
@@ -42,7 +42,7 @@ export function Garage() {
               <OptionCard
                 key={c.id}
                 selected={c.id === state.primaryCarId}
-                onClick={() => { set({ primaryCarId: c.id }); navigate(`/garage/${c.id}`) }}
+                onClick={() => navigate(`/garage/${c.id}`)}
                 title={c.name}
                 sub={carSummary(c)}
               />
@@ -63,17 +63,34 @@ export function GarageEdit() {
   const { id } = useParams()
   const { state, set } = useStore()
   const car = state.cars.find((c) => c.id === id)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const isPrimary = car && car.id === state.primaryCarId
   return (
+    <>
     <CarForm
       title={car ? 'Car information' : 'Add your car details'}
       cta="Save"
       initial={car}
+      extra={car && (
+        <div className="flex flex-col gap-3 pb-6">
+          {isPrimary ? <p className="flex items-center gap-2 text-sm text-muted"><CircleCheck size={16} strokeWidth={2} className="text-success" />This is your primary car</p>
+            : <Button variant="secondary" size="md" onClick={() => set({ primaryCarId: car.id })}>Set as primary car</Button>}
+          <Button variant="danger" size="md" onClick={() => setConfirmDelete(true)}>Delete vehicle</Button>
+        </div>
+      )}
       onSubmit={(v) => {
         if (car) set((s) => ({ cars: s.cars.map((c) => (c.id === car.id ? { ...c, ...v } : c)) }))
         else { const nid = uid(); set((s) => ({ cars: [...s.cars, { id: nid, ...v }], primaryCarId: s.primaryCarId ?? nid })) }
         navigate(-1)
       }}
     />
+    {car && (
+      <ConfirmSheet open={confirmDelete} onClose={() => setConfirmDelete(false)} title={`Delete ${car.name}?`} body="It will be removed from your garage. Past bookings and receipts stay in your history.">
+        <Button variant="danger" onClick={() => { set((s) => { const cars = s.cars.filter((c) => c.id !== car.id); return { cars, primaryCarId: s.primaryCarId === car.id ? cars[0]?.id ?? null : s.primaryCarId } }); navigate('/garage', { replace: true }) }}>Delete vehicle</Button>
+        <Button variant="tertiary" onClick={() => setConfirmDelete(false)}>Keep vehicle</Button>
+      </ConfirmSheet>
+    )}
+    </>
   )
 }
 
@@ -119,7 +136,7 @@ export function Profile() {
             <SectionLabel>Locations</SectionLabel>
             <div className="flex flex-col gap-3 rounded-md bg-bg p-3">
               <span className="text-xs text-muted">Home</span>
-              <span className="text-sm leading-[1.5]">Building 12, Al Waab Street<br />Doha, Qatar 000000</span>
+              <span className="text-sm leading-[1.5]">Building 12, Al Waab Street<br />Al Waab, Doha</span>
             </div>
           </section>
 
@@ -134,7 +151,7 @@ export function Profile() {
       </Scroll>
       <BottomNav />
 
-      <ConfirmSheet open={sheet === 'logout'} onClose={() => setSheet(null)} title="Log out of ONGO?" body="You'll need your phone number and a code to sign back in.">
+      <ConfirmSheet open={sheet === 'logout'} onClose={() => setSheet(null)} title="Log out of ONGO?" body="You’ll need your phone number and a code to sign back in.">
         <Button onClick={() => { set({ onboarded: false, booking: null }); navigate('/auth', { replace: true }) }}>Log out</Button>
         <Button variant="tertiary" onClick={() => setSheet(null)}>Cancel</Button>
       </ConfirmSheet>
@@ -155,14 +172,14 @@ export function ProfileEdit() {
   return (
     <Screen>
       <StatusBar />
-      <Header title="Edit information" />
+      <Header title="Edit profile" />
       <Scroll>
         <div className="flex flex-col gap-6 px-6 pt-7">
           <Field label="Name">
             <span className={inputBox}><input value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-transparent outline-none" /></span>
           </Field>
           <div className="flex flex-col gap-3">
-            <SectionLabel>Profile and account</SectionLabel>
+            <SectionLabel>Contact details</SectionLabel>
             <label className={cx(inputBox, 'justify-between')}>
               <span className="flex items-center gap-2 text-sm text-muted"><MailOpen size={16} strokeWidth={2} className="text-ink" />Email</span>
               <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="min-w-0 flex-1 bg-transparent text-right outline-none" />
@@ -312,6 +329,8 @@ export function Payments() {
   const fromBooking = params.get('from') === 'booking'
   const { state, set } = useStore()
   const list = state.payments
+  const [manage, setManage] = useState<string | null>(null)
+  const managed = list.find((p) => p.id === manage)
   return (
     <Screen>
       <StatusBar />
@@ -329,7 +348,7 @@ export function Payments() {
               return (
                 <button
                   key={p.id}
-                  onClick={() => { set({ primaryPaymentId: p.id }); if (fromBooking) navigate(-1) }}
+                  onClick={() => { if (fromBooking) { set({ primaryPaymentId: p.id }); navigate(-1) } else setManage(p.id) }}
                   className={cx('flex items-center gap-2.5 rounded-sm bg-bg p-3 text-left transition-[box-shadow,transform] active:scale-[0.985]', fromBooking && primary ? 'shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'shadow-[inset_0_0_0_1px_var(--color-line)]')}
                 >
                   <img src={brandIcon[p.brand]} alt="" width={58} height={40} />
@@ -341,10 +360,16 @@ export function Payments() {
                 </button>
               )
             })}
-            <Button variant="secondary" lead={<Plus size={20} strokeWidth={2} />} className="font-semibold" onClick={() => navigate(`/payments/add${fromBooking ? '?from=booking' : ''}`)}>Add payment method</Button>
+            <Button variant="secondary" lead={<Plus size={20} strokeWidth={2} />} className="font-semibold" onClick={() => navigate(`/payments/add${fromBooking ? '?from=booking&back=2' : ''}`)}>Add payment method</Button>
           </div>
         </Scroll>
       )}
+      {/* Manage a saved method */}
+      <ConfirmSheet open={!!managed} onClose={() => setManage(null)} title={managed ? `${managed.label}${managed.last4 ? ` •••• ${managed.last4}` : ''}` : ''} body={managed?.id === state.primaryPaymentId ? 'This is your primary payment method.' : 'Use it by default, or remove it from your account.'}>
+        {managed && managed.id !== state.primaryPaymentId && <Button onClick={() => { set({ primaryPaymentId: managed.id }); setManage(null) }}>Set as primary</Button>}
+        <Button variant="danger" onClick={() => { const id = managed!.id; set((s) => { const payments = s.payments.filter((p) => p.id !== id); return { payments, primaryPaymentId: s.primaryPaymentId === id ? payments[0]?.id ?? null : s.primaryPaymentId } }); setManage(null) }}>Remove</Button>
+        <Button variant="tertiary" onClick={() => setManage(null)}>Cancel</Button>
+      </ConfirmSheet>
     </Screen>
   )
 }
@@ -396,8 +421,9 @@ export function AddCard() {
             className="font-bold"
             onClick={() => {
               const id = uid()
-              set((s) => ({ payments: [...s.payments, { id, brand, label: brand === 'visa' ? 'Visa' : 'Mastercard', last4: digits.slice(-4), bank: brand === 'mastercard' ? 'CBQ' : undefined }], primaryPaymentId: primary || !s.primaryPaymentId ? id : s.primaryPaymentId }))
-              navigate(-1)
+              set((s) => ({ payments: [...s.payments, { id, brand, label: brand === 'visa' ? 'Visa' : 'Mastercard', last4: digits.slice(-4) }], primaryPaymentId: primary || !s.primaryPaymentId ? id : s.primaryPaymentId }))
+              // From checkout, return straight to Review and pay (skip the methods list)
+              navigate(-Number(params.get('back') ?? 1))
             }}
           >
             Save payment method

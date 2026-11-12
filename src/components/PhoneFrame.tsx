@@ -27,8 +27,8 @@ function useIsDesktop() {
 /** Every Figma frame, grouped like the canvas, so reviewers can jump straight to a state. */
 const INDEX: { group: string; items: [string, string][] }[] = [
   { group: 'Onboarding', items: [['Loader', '/'], ['Sign in / Sign up', '/auth'], ['Browse before account', '/browse'], ['Phone number', '/signup/phone'], ['Select country', '/signup/country'], ['OTP code', '/signup/otp'], ['Car info', '/signup/car'], ['Welcome', '/welcome']] },
-  { group: 'Home & booking', items: [['Home', '/home'], ['Set location (map)', '/book'], ['Car wash details', '/book/details'], ['Finding washer', '/book/confirm'], ['Cancel reason', '/book/cancel'], ['No washer available', '/book/no-washer']] },
-  { group: 'Bookings', items: [['Current booking', '/bookings'], ['Recent bookings', '/bookings/recent'], ['Rate your wash', '/rate'], ['Thanks for feedback', '/rate/thanks']] },
+  { group: 'Home & booking', items: [['Home', '/home'], ['Set location (map)', '/book'], ['Car wash details', '/book/details'], ['Review and pay', '/book/review'], ['Wash booked', '/book/scheduled'], ['Finding washer', '/book/confirm'], ['Cancel reason', '/book/cancel'], ['Booking cancelled', '/book/cancelled'], ['No washer available', '/book/no-washer']] },
+  { group: 'Bookings', items: [['Current booking', '/bookings'], ['Recent bookings', '/bookings/recent'], ['Rate your wash', '/rate'], ['Thanks for feedback', '/rate/thanks'], ['Receipt', '/receipt/r1']] },
   { group: 'Garage & profile', items: [['Garage', '/garage'], ['Add vehicle', '/garage/new'], ['Profile', '/profile'], ['Edit profile', '/profile/edit'], ['App settings', '/settings'], ['Notifications', '/notifications']] },
   { group: 'Payments', items: [['Payment methods', '/payments'], ['Add card', '/payments/add']] },
   { group: 'Errors', items: [['Offline', '/offline']] },
@@ -106,6 +106,11 @@ export function PhoneFrame({ children }: { children: ReactNode }) {
             {toggle('No washer available', state.noWasher, () => set((s) => ({ noWasher: !s.noWasher })))}
             {toggle('Wrong OTP code', state.wrongOtp, () => set((s) => ({ wrongOtp: !s.wrongOtp })))}
             {toggle('Location services off', state.locationOff, () => set((s) => ({ locationOff: !s.locationOff })))}
+            {state.booking?.status === 'scheduled' && (
+              <button onClick={() => { set((s) => ({ booking: s.booking ? { ...s.booking, status: 'searching', createdAt: Date.now() } : null })); navigate('/book/confirm') }} className="rounded-sm px-2 py-1.5 text-left text-[13px] text-ink/80 hover:bg-ink/[0.05]">
+                Start scheduled wash now
+              </button>
+            )}
             <button onClick={() => { reset(); navigate('/') }} className="mt-2 rounded-sm px-2 py-1.5 text-left text-[13px] text-danger hover:bg-danger-subtle">
               Reset demo
             </button>

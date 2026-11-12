@@ -3,18 +3,13 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { ArrowLeft, Calendar, ChevronRight, Circle, MapPin, Search, Timer, Warehouse, X } from 'lucide-react'
 import { useStore, uid } from '../lib/store'
-import { ADDONS, CANCEL_REASONS, LOCATIONS, PIN_AREAS, SERVICES, SERVICE_LIST_ORDER, serviceById, type ServiceId } from '../lib/data'
+import { ADDONS, CANCEL_REASONS, LOCATIONS, PIN_AREAS, SERVICES, SERVICE_LIST_ORDER, quote, serviceById, servicePrice, type ServiceId } from '../lib/data'
 import { Badge, BackButton, Button, FeatureLine, Footer, Header, Screen, Scroll, Sheet, StatusBar, SheetHandle, ThemedImg, cx, useTimeout } from '../components/ui'
-import { ConfirmSheet } from '../components/Sheets'
 
 import mapImg from '../assets/img/map.png'
 import logo from '../assets/icons/ongo-logo.svg'
 import logoWhite from '../assets/icons/ongo-logo-white.svg'
-import applePay from '../assets/icons/applepay-lg.svg'
-import mastercard from '../assets/icons/mastercard.svg'
-import visaSm from '../assets/icons/visa.svg'
 import illPin from '../assets/img/ill-pin.png'
-import illCard from '../assets/img/ill-card.png'
 
 type Step = 'locate' | 'search' | 'service' | 'addons' | 'schedule'
 
@@ -104,23 +99,11 @@ function Chip({ children, onClick, icon }: { children: ReactNode; onClick?: () =
   )
 }
 
-/* payment method row + pay button (Reservation confirmation) */
-function PayBlock({ onPay, label = 'Pay and continue', disabled }: { onPay: () => void; label?: string; disabled?: boolean }) {
-  const { state } = useStore()
-  const navigate = useNavigate()
-  const card = state.payments.find((p) => p.id === state.primaryPaymentId) ?? state.payments[0]
+/* Sheet footer: one clear next step (payment happens on Review and pay) */
+function ContinueBlock({ label = 'Continue', disabled, onClick }: { label?: string; disabled?: boolean; onClick: () => void }) {
   return (
-    <div className="flex flex-col gap-3.5" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
-      <button onClick={() => navigate('/payments?from=booking')} className="flex h-8 items-center justify-between text-xs">
-        {card ? (
-          <span className="flex items-center gap-2">
-            <img src={card.brand === 'visa' ? visaSm : card.brand === 'applepay' ? applePay : mastercard} alt="" width={34} height={24} className="h-6 w-[34px] object-contain" />
-            {card.label} {card.last4 && <span className="tracking-wider">•••• {card.last4}</span>} {card.bank && `(${card.bank})`}
-          </span>
-        ) : 'Set up a payment method'}
-        <ChevronRight size={16} strokeWidth={2} />
-      </button>
-      <Button size="lg" className="!h-[49px] font-medium" disabled={disabled || !card} onClick={onPay}>{label}</Button>
+    <div style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
+      <Button size="lg" className="!h-[49px] font-semibold" disabled={disabled} onClick={onClick}>{label}</Button>
     </div>
   )
 }
@@ -156,18 +139,24 @@ function LocateStep({ go, onBack, area, onConfirm }: { go: (s: Step) => void; on
 }
 
 function SearchStep({ go, onPick, onBack }: { go: (s: Step) => void; onPick: (id: string) => void; onBack: () => void }) {
+  const { state, set } = useStore()
+  const when = state.draft.when
+  const clearWhen = () => set((s) => ({ draft: { ...s.draft, when: null } }))
   const [q, setQ] = useState('')
   const list = useMemo(() => LOCATIONS.filter((l) => (l.name + l.address).toLowerCase().includes(q.trim().toLowerCase())), [q])
   return (
     <div className="flex min-h-0 flex-1 flex-col px-6">
       <div className="flex flex-col gap-4 pb-4">
         <SheetTitle icon="back" onIcon={onBack}>Plan your car wash</SheetTitle>
-        <Chip icon={<Calendar size={12} strokeWidth={2} />} onClick={() => go('schedule')}>Wash later</Chip>
+        <div className="flex items-center gap-2">
+          <Chip icon={<Calendar size={12} strokeWidth={2} />} onClick={() => go('schedule')}>{when ?? 'Wash later'}</Chip>
+          {when && <button onClick={clearWhen} className="-my-2 py-2 text-xs underline underline-offset-2">Wash now instead</button>}
+        </div>
         <div className="h-px bg-line" />
       </div>
       <label className="flex h-[45px] shrink-0 items-center gap-4 rounded-[7px] bg-bg-2 px-3 focus-within:ring-2 focus-within:ring-brand">
         <MapPin size={16} strokeWidth={2} />
-        <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Car location" aria-label="Search car location" className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted" />
+        <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search for your car’s location" aria-label="Search for your car’s location" className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted" />
         <Search size={16} strokeWidth={2} />
       </label>
       <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto pb-6">
@@ -184,7 +173,7 @@ function SearchStep({ go, onPick, onBack }: { go: (s: Step) => void; onPick: (id
               <span className="flex flex-1 flex-col gap-3 border-b border-line py-6">
                 <span className="flex items-center gap-2.5 text-sm">
                   <span className={l.recent ? 'font-bold' : ''}>{l.name}</span>
-                  {l.recent && <Badge>RECENT</Badge>}
+                  {l.recent && <Badge>Recent</Badge>}
                 </span>
                 <span className="text-sm opacity-60">{l.address}</span>
               </span>
@@ -198,6 +187,7 @@ function SearchStep({ go, onPick, onBack }: { go: (s: Step) => void; onPick: (id
 
 function ServiceRow({ id, selected, onClick }: { id: ServiceId; selected: boolean; onClick: () => void }) {
   const s = serviceById(id)
+  const { primaryCar } = useStore()
   return (
     <button
       onClick={onClick}
@@ -211,7 +201,7 @@ function ServiceRow({ id, selected, onClick }: { id: ServiceId; selected: boolea
         {s.recommended && <Badge tone="dark">Recommended</Badge>}
       </span>
       {s.price !== null ? (
-        <span className="text-sm"><b>{s.price}</b> QAR</span>
+        <span className="text-sm"><b className="tabular">{servicePrice(id, primaryCar?.type)}</b> QAR</span>
       ) : (
         <ChevronRight size={22} strokeWidth={2} />
       )}
@@ -219,7 +209,7 @@ function ServiceRow({ id, selected, onClick }: { id: ServiceId; selected: boolea
   )
 }
 
-function ServiceStep({ go, onClose, onPay }: { go: (s: Step) => void; onClose: () => void; onPay: () => void }) {
+function ServiceStep({ go, onClose, onNext }: { go: (s: Step) => void; onClose: () => void; onNext: () => void }) {
   const { state, set } = useStore()
   const navigate = useNavigate()
   return (
@@ -239,16 +229,17 @@ function ServiceStep({ go, onClose, onPay }: { go: (s: Step) => void; onClose: (
           />
         ))}
       </div>
-      <PayBlock onPay={onPay} />
+      <ContinueBlock onClick={() => (state.draft.service === 'custom' ? go('addons') : onNext())} />
     </div>
   )
 }
 
-export function AddonGrid({ compact }: { compact?: boolean }) {
+/* Bottom sheet / Choose add-ons — 2-column grid (Figma 3616:8706) */
+export function AddonGrid() {
   const { state, set } = useStore()
   const toggle = (id: string) => set((s) => ({ draft: { ...s.draft, addons: s.draft.addons.includes(id) ? s.draft.addons.filter((a) => a !== id) : [...s.draft.addons, id] } }))
   return (
-    <div className="grid grid-cols-3 gap-0">
+    <div className="grid grid-cols-2 gap-2">
       {ADDONS.map((a) => {
         const on = state.draft.addons.includes(a.id)
         return (
@@ -257,13 +248,15 @@ export function AddonGrid({ compact }: { compact?: boolean }) {
             onClick={() => toggle(a.id)}
             aria-pressed={on}
             className={cx(
-              'm-[1.5px] flex h-[88px] flex-col items-center justify-center gap-2 rounded-sm px-3 text-center text-xs leading-[1.25] text-muted transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.96]',
-              on ? 'bg-brand-subtle text-ink/70 shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'bg-bg shadow-[inset_0_0_0_1px_var(--color-line-strong)]',
-              compact && 'h-[88px]',
+              'flex flex-col items-center justify-center gap-2 rounded-sm px-2 py-4 text-center text-xs leading-[1.25] text-muted transition-[background-color,box-shadow,transform] duration-150 active:scale-[0.97]',
+              on ? 'bg-brand-subtle shadow-[inset_0_0_0_2px_var(--color-ink)]' : 'bg-bg shadow-[inset_0_0_0_1px_var(--color-line-strong)]',
             )}
           >
             <img src={a.icon} alt="" width={24} height={24} className="dark:invert" />
-            {a.label}
+            <span className="text-balance">
+              {a.label}
+              <span className="block font-semibold tabular">+{a.price} QAR</span>
+            </span>
           </button>
         )
       })}
@@ -271,13 +264,14 @@ export function AddonGrid({ compact }: { compact?: boolean }) {
   )
 }
 
-function AddonsStep({ go, onPay }: { go: (s: Step) => void; onPay: () => void }) {
-  const { state } = useStore()
+function AddonsStep({ go, onNext }: { go: (s: Step) => void; onNext: () => void }) {
+  const { state, primaryCar } = useStore()
+  const q = quote('custom', state.draft.addons, primaryCar?.type)
   return (
     <div className="flex flex-col gap-6 px-6">
-      <div className="pb-4"><SheetTitle icon="back" onIcon={() => go('service')}>Choose add-ons</SheetTitle></div>
+      <SheetTitle icon="back" onIcon={() => go('service')}>Choose add-ons</SheetTitle>
       <AddonGrid />
-      <PayBlock onPay={onPay} disabled={state.draft.addons.length === 0} />
+      <ContinueBlock disabled={state.draft.addons.length === 0} label={state.draft.addons.length ? `Continue · ${q.total} QAR` : 'Pick at least one add-on'} onClick={onNext} />
     </div>
   )
 }
@@ -359,18 +353,13 @@ export function BookingMap() {
   const step = (params.get('step') as Step) ?? 'locate'
   const go = (s: Step) => setParams({ step: s })
   const { state, set } = useStore()
-  const [failed, setFailed] = useState(false)
   const [area, setArea] = useState<string | null>(null)
   const [moves, setMoves] = useState(0)
   const [geoDismissed, setGeoDismissed] = useState(false)
   const geoOpen = state.locationOff && !geoDismissed && step === 'locate'
 
-  const pay = () => {
-    if (state.failPayment) { setFailed(true); return }
-    const d = state.draft
-    set({ booking: { id: uid(), service: d.service, addons: d.service === 'custom' ? d.addons : [], location: d.location ?? 'seaside', when: d.when, stage: 0, status: 'searching', createdAt: Date.now() } })
-    navigate('/book/confirm', { replace: true })
-  }
+  const review = () => navigate('/book/review')
+
 
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -392,8 +381,8 @@ export function BookingMap() {
           />
         )}
         {step === 'search' && <SearchStep go={go} onBack={() => (params.get('step') ? navigate(-1) : go('locate'))} onPick={(id) => { set((s) => ({ draft: { ...s.draft, location: id } })); go('service') }} />}
-        {step === 'service' && <ServiceStep go={go} onClose={() => navigate('/home', { replace: true })} onPay={pay} />}
-        {step === 'addons' && <AddonsStep go={go} onPay={pay} />}
+        {step === 'service' && <ServiceStep go={go} onClose={() => navigate('/home', { replace: true })} onNext={review} />}
+        {step === 'addons' && <AddonsStep go={go} onNext={review} />}
         {step === 'schedule' && <ScheduleStep go={go} onDone={(when) => { set((s) => ({ draft: { ...s.draft, when } })); go('search') }} />}
       </DockSheet>
       {/* Bottom sheet / Geolocation settings — demo toggle "Location services off" */}
@@ -407,10 +396,6 @@ export function BookingMap() {
           <Button variant="secondary" onClick={() => { set({ locationOff: false }); setGeoDismissed(true) }}>Go to Settings</Button>
         </div>
       </Sheet>
-      <ConfirmSheet open={failed} onClose={() => setFailed(false)} image={illCard} title="Payment didn't go through" body="Your bank declined the charge. Try again, or use a different card.">
-        <Button onClick={() => { set({ failPayment: false }); setFailed(false); setTimeout(pay, 250) }}>Try again</Button>
-        <Button variant="tertiary" onClick={() => navigate('/payments?from=booking')}>Change payment method</Button>
-      </ConfirmSheet>
     </div>
   )
 }
@@ -418,7 +403,7 @@ export function BookingMap() {
 /* ---------- Booking 1.6 — Car wash details ---------- */
 export function BookingDetails() {
   const navigate = useNavigate()
-  const { state, set } = useStore()
+  const { state, set, primaryCar } = useStore()
   return (
     <Screen bg="bg-bg-2">
       <div className="bg-bg-2"><StatusBar /><Header title="Car wash details" /></div>
@@ -435,14 +420,14 @@ export function BookingDetails() {
                 <div className="flex items-center gap-1">
                   <img src={s.icon} alt="" width={34} height={34} className="size-[34px] object-contain" />
                   <span className="flex-1 text-lg font-bold">{s.detailName}</span>
-                  {s.price !== null && <span className="flex items-end gap-1 leading-none"><span className="pb-0.5 text-sm">QAR</span><span className="tabular text-4xl font-bold tracking-[-0.03em]" style={{ lineHeight: 0.8 }}>{s.price}</span></span>}
+                  {s.price !== null && <span className="flex items-end gap-1 leading-none"><span className="pb-0.5 text-sm">QAR</span><span className="tabular text-4xl font-bold tracking-[-0.03em]" style={{ lineHeight: 0.8 }}>{servicePrice(s.id, primaryCar?.type)}</span></span>}
                 </div>
                 <p className="flex items-center gap-2 text-sm leading-none"><Timer size={16} strokeWidth={2} />{s.duration}</p>
                 <div className="flex flex-col gap-1">{s.detailFeatures.map((f) => <FeatureLine key={f} muted>{f}</FeatureLine>)}</div>
                 {s.id === 'custom' && (
                   <div className="flex flex-col gap-4" onClick={(e) => e.stopPropagation()}>
                     <p className="border-b border-line pb-4 text-sm">Choose add-ons</p>
-                    <AddonGrid compact />
+                    <AddonGrid />
                   </div>
                 )}
               </button>
@@ -450,7 +435,7 @@ export function BookingDetails() {
           })}
         </div>
         <div className="sticky bottom-0 -mx-6 bg-bg-2 px-6 pt-2">
-          <PayBlock onPay={() => navigate('/book?step=service', { replace: true })} />
+          <ContinueBlock onClick={() => navigate(state.draft.service === 'custom' && !state.draft.addons.length ? '/book?step=addons' : '/book/review')} />
         </div>
       </Scroll>
     </Screen>
@@ -472,6 +457,8 @@ export function BookingConfirm() {
   const { state, set } = useStore()
   const b = state.booking
   const until = new Date((b?.createdAt ?? Date.now()) + 5 * 60e3).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  const hp = state.payments.find((p) => p.id === b?.paymentId)
+  const heldCard = hp ? `${hp.label}${hp.last4 ? ` •••• ${hp.last4}` : ''}` : null
 
   useTimeout(() => {
     if (!state.booking) return
@@ -487,6 +474,7 @@ export function BookingConfirm() {
         <PulsingLogo />
         <h1 className="text-center text-[22px] font-bold leading-[1.3] text-balance">Payment on hold. Finding the best available washer for you.</h1>
         <div className="flex w-full flex-col items-center gap-2 rounded-lg border border-line p-4">
+          {b?.total != null && <p className="text-sm font-semibold">{b.total} QAR on hold{heldCard ? ` on ${heldCard}` : ''}</p>}
           <p className="text-[13px] text-muted-2">Free cancellation until {until}</p>
           <Button variant="danger" size="md" onClick={() => navigate('/book/cancel')}>Cancel booking</Button>
         </div>
@@ -518,7 +506,7 @@ export function NoWasher() {
 /* ---------- Booking 2.1 — Cancel reason ---------- */
 export function CancelReason() {
   const navigate = useNavigate()
-  const [sel, setSel] = useState(0)
+  const [sel, setSel] = useState<number | null>(null)
   return (
     <Screen>
       <StatusBar />
@@ -540,7 +528,7 @@ export function CancelReason() {
         ))}
       </Scroll>
       <Footer className="flex flex-col items-center gap-4 pt-7">
-        <Button variant="danger" size="md" onClick={() => navigate('/book/cancelling', { replace: true })}>Submit and cancel booking</Button>
+        <Button variant="danger" size="md" disabled={sel === null} onClick={() => navigate('/book/cancelling', { replace: true })}>Cancel booking</Button>
         <button onClick={() => navigate(-1)} className="py-1 text-sm font-semibold">Keep my booking</button>
       </Footer>
     </Screen>
@@ -550,8 +538,9 @@ export function CancelReason() {
 /* ---------- Cancel — Cancelling… ---------- */
 export function Cancelling() {
   const navigate = useNavigate()
-  const { set } = useStore()
-  useTimeout(() => { set({ booking: null }); navigate('/home', { replace: true }) }, 1600)
+  const { state, set } = useStore()
+  const total = state.booking?.total
+  useTimeout(() => { set({ booking: null }); navigate('/book/cancelled', { replace: true, state: { total } }) }, 1600)
   return (
     <Screen>
       <StatusBar />

@@ -16,9 +16,9 @@ On desktop the app renders inside an iPhone frame with a side panel to jump to a
 ## Flows
 
 - Onboarding: sign in, price preview, phone + country, OTP, car details, welcome
-- Booking: draggable map, location search, service selection, add-ons, scheduling, payment
-- Tracking: washer search, live timeline, cancel, rating and feedback
-- Account: garage, profile, settings, notifications, payment methods
+- Booking: draggable map, location search, service selection, add-ons with prices, scheduling, Review and pay (car, place, time, parking notes, price breakdown, payment hold), scheduled confirmation and upcoming bookings, cancellation result
+- Tracking: washer search, live timeline, contact washer, cancel, rating and feedback, receipts for past washes
+- Account: garage (set primary, delete), profile, settings, notifications, payment methods (set primary, remove)
 - Empty, error and confirmation states
 
 Design tokens in `src/index.css` mirror the Figma Theme (Light and Dark modes) and Sizes variables. Dark mode is set on `<html data-theme>` from App Settings → Appearance; Tailwind's `dark:` variant follows that attribute. State persists to `localStorage`; use "Reset demo" to start over.

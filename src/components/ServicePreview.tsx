@@ -1,13 +1,16 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Timer } from 'lucide-react'
-import { SERVICES, type ServiceId } from '../lib/data'
+import { SERVICES, servicePrice, type ServiceId } from '../lib/data'
+import { useStore } from '../lib/store'
 import { FeatureLine, Tabs } from './ui'
 
 /** "Services" component from Figma: segmented tabs + price card (Default / Variant2-4). */
 export function ServicePreview({ titleSize = 18, priceSize = 36 }: { titleSize?: number; priceSize?: number }) {
   const [tab, setTab] = useState<ServiceId>('express')
   const s = SERVICES.find((x) => x.id === tab)!
+  const { state, primaryCar } = useStore()
+  const type = state.onboarded ? primaryCar?.type : null
   return (
     <div className="flex w-full flex-col gap-2">
       <Tabs id="services" value={tab} onChange={setTab} items={SERVICES.map((x) => ({ value: x.id, label: x.tab }))} />
@@ -31,11 +34,11 @@ export function ServicePreview({ titleSize = 18, priceSize = 36 }: { titleSize?:
               </div>
               <p className="flex items-end gap-1 leading-none">
                 {s.price === null ? (
-                  <span className="pt-2 text-lg font-bold">Price varies</span>
+                  <span className="flex flex-col items-end gap-1 pt-1"><span className="text-xs text-muted">From</span><span className="tabular text-lg font-bold">{servicePrice('express', type)} QAR</span></span>
                 ) : (
                   <>
                     <span className="pb-0.5 text-sm text-muted">QAR</span>
-                    <span className="tabular font-bold tracking-[-0.03em]" style={{ fontSize: priceSize, lineHeight: 0.8 }}>{s.price}</span>
+                    <span className="tabular font-bold tracking-[-0.03em]" style={{ fontSize: priceSize, lineHeight: 0.8 }}>{servicePrice(s.id, type)}</span>
                   </>
                 )}
               </p>

@@ -59,14 +59,15 @@ function ProgressCard() {
   const navigate = useNavigate()
   const b = state.booking!
   const searching = b.status === 'searching'
+  const scheduled = b.status === 'scheduled'
   const steps = [ListTodo, Warehouse, CarFront, CircleCheck]
-  const fill = searching ? 0.6 : Math.min(3, b.stage <= 1 ? 1 : b.stage <= 3 ? 2 : 3)
-  const label = searching ? 'Finding your washer' : b.stage >= 5 ? 'Your car is ready' : 'Arriving in 15–30 min'
+  const fill = scheduled ? 0 : searching ? 0.6 : Math.min(3, b.stage <= 1 ? 1 : b.stage <= 3 ? 2 : 3)
+  const label = scheduled ? `Scheduled · ${b.when}` : searching ? 'Finding your washer' : b.stage >= 5 ? 'Your car is ready' : 'Arriving in 15–30 min'
   return (
     <div className="flex flex-col gap-4 rounded-lg border border-line bg-bg p-4">
       <div className="flex items-center justify-between">
         <p className="text-sm font-bold">{label}</p>
-        <Badge>{searching ? 'Pending' : b.stage >= 5 ? 'Done' : 'On the way'}</Badge>
+        <Badge>{scheduled ? 'Booked' : searching ? 'Pending' : b.stage >= 5 ? 'Done' : 'On the way'}</Badge>
       </div>
       <div className="flex h-[42px] items-center gap-2">
         {steps.map((Icon, i) => (
@@ -86,10 +87,10 @@ function ProgressCard() {
         ))}
       </div>
       <div className="flex flex-col gap-1 text-sm leading-[1.5]">
-        <p>{searching ? 'Car wash requested' : b.stage >= 5 ? 'Wash complete' : 'Washer assigned'}</p>
-        <p className="text-muted">{searching ? 'We’ve received your request and will keep you updated.' : 'We’ll keep you updated until your car is done.'}</p>
+        <p>{scheduled ? 'Car wash booked' : searching ? 'Car wash requested' : b.stage >= 5 ? 'Wash complete' : 'Washer assigned'}</p>
+        <p className="text-muted">{scheduled ? 'We’ll assign your washer 30 minutes before.' : searching ? 'We’ve received your request and will keep you updated.' : 'We’ll keep you updated until your car is done.'}</p>
       </div>
-      <Button variant="tertiary" size="sm" onClick={() => navigate(searching ? '/book/confirm' : '/bookings')}>Track your service</Button>
+      <Button variant="tertiary" size="sm" onClick={() => navigate(searching ? '/book/confirm' : '/bookings')}>{scheduled ? 'View booking' : 'Track your service'}</Button>
     </div>
   )
 }
@@ -106,7 +107,7 @@ export function Home() {
         <div className="flex flex-col gap-6 px-6 py-7">
           {!active && (
             <div className="flex flex-col gap-3">
-              <p className="text-xs font-bold leading-none">Start by setting your car's location.</p>
+              <p className="text-xs font-bold leading-none">Start by setting your car’s location.</p>
               <LocationField onClick={() => navigate('/book?step=search')} />
             </div>
           )}
@@ -136,7 +137,7 @@ export function Offline() {
     <Screen>
       <StatusBar tall />
       <HomeHeader />
-      <EmptyState image={illCalendar} title="You're offline" body="Check your connection. We'll refresh your bookings as soon as you're back online.">
+      <EmptyState image={illCalendar} title="You’re offline" body="Check your connection. We’ll refresh your bookings as soon as you’re back online.">
         <Button onClick={() => navigate('/home', { replace: true })}>Retry</Button>
       </EmptyState>
       <BottomNav />

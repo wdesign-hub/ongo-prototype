@@ -238,7 +238,7 @@ export function BottomNav() {
         return (
           <button
             key={it.to}
-            onClick={() => !active && navigate(it.to, { replace: true })}
+            onClick={() => pathname !== it.to && navigate(it.to, { replace: true })}
             aria-current={active ? 'page' : undefined}
             className="flex w-[92px] flex-col items-center gap-1"
           >

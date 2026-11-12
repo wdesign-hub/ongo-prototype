@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { useNavigate } from 'react-router'
-import { RefreshCcw } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router'
+import { CalendarClock, MapPin, MessageSquare, Phone, RefreshCcw } from 'lucide-react'
 import { useStore, uid } from '../lib/store'
-import { FEEDBACK_TAGS, TIMELINE, serviceById } from '../lib/data'
-import { BottomNav, Button, EmptyState, Field, Screen, Scroll, StatusBar, Tabs, cx, inputBox } from '../components/ui'
+import { FEEDBACK_TAGS, TIMELINE, clock, placeById, quote, serviceById } from '../lib/data'
+import { Badge, BottomNav, Button, EmptyState, Field, Screen, Scroll, Sheet, StatusBar, Tabs, cx, inputBox } from '../components/ui'
+import { carSummary } from '../components/Sheets'
 
 import avatar from '../assets/img/avatar-washer.jpg'
 import star from '../assets/icons/star.svg'
@@ -40,7 +41,7 @@ function WasherHead() {
 }
 
 /* Vertical tracking timeline */
-function Timeline({ stage }: { stage: number }) {
+function Timeline({ stage, createdAt }: { stage: number; createdAt: number }) {
   return (
     <div className="rounded-lg border border-line bg-bg px-4 py-3">
       {TIMELINE.map((e, i) => {
@@ -66,7 +67,7 @@ function Timeline({ stage }: { stage: number }) {
             <div className={cx('flex flex-1 flex-col gap-1 transition-opacity duration-300', !done && !current && 'opacity-40')}>
               <div className="flex items-center justify-between gap-2">
                 <p className={cx('text-[15px] leading-[1.4]', (current || isFinal) ? 'font-semibold' : '', !done && !current ? 'text-muted' : '')}>{e.title}</p>
-                {e.time && <span className="tabular text-xs text-muted">{e.time}</span>}
+                {(i < TIMELINE.length - 1 || stage >= 5) && <span className="tabular text-xs text-muted">{done ? '' : '~'}{clock(createdAt + e.at * 60e3)}</span>}
               </div>
               {e.sub && (done || current) && <p className="text-[13px] text-muted">{e.sub}</p>}
             </div>
@@ -90,14 +91,17 @@ export function BookingsCurrent() {
     return () => clearTimeout(t)
   }, [b, set])
 
-  const until = new Date((b?.createdAt ?? Date.now()) + 5 * 60e3).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  const until = clock((b?.createdAt ?? Date.now()) + 5 * 60e3)
+  const [contact, setContact] = useState(false)
 
   return (
     <Screen>
       <StatusBar tall />
       <TitleHeader title="Bookings" />
       <BookingTabs value="current" />
-      {!b || b.status === 'searching' ? (
+      {b?.status === 'scheduled' ? (
+        <Scroll><div className="px-6 pt-7"><UpcomingCard /></div></Scroll>
+      ) : !b || b.status === 'searching' ? (
         b ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
             <p className="text-[22px] font-bold">Finding your washer…</p>
@@ -113,16 +117,16 @@ export function BookingsCurrent() {
           <div className="flex flex-col gap-4 px-6 pt-7 pb-6">
             <AnimatePresence mode="wait" initial={false}>
               <motion.h2 key={finished ? 'done' : 'way'} className="text-[28px] font-bold leading-none" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }}>
-                {finished ? 'Car wash finished' : stageTitle(b.stage)}
+                {finished ? 'Wash complete' : stageTitle(b.stage)}
               </motion.h2>
             </AnimatePresence>
             <div className="flex flex-col gap-3 rounded-lg border border-line p-3">
               <WasherHead />
-              <Button size="md" onClick={() => window.open('tel:+97400000000')}>Contact</Button>
+              <Button size="md" onClick={() => setContact(true)}>Contact</Button>
               {finished ? (
                 <>
-                  <Button size="md" onClick={() => navigate('/rate')}>Wash complete</Button>
-                  <p className="text-center text-[13px] text-muted-2">Check your car to confirm it's clean</p>
+                  <Button size="md" onClick={() => navigate('/rate')}>Confirm and rate</Button>
+                  <p className="text-center text-[13px] text-muted-2">Check your car first. Mike will wait nearby for 10 minutes.</p>
                 </>
               ) : (
                 <>
@@ -131,12 +135,50 @@ export function BookingsCurrent() {
                 </>
               )}
             </div>
-            <Timeline stage={b.stage} />
+            <Timeline stage={b.stage} createdAt={b.createdAt} />
           </div>
         </Scroll>
       )}
       <BottomNav />
+      {/* Contact washer */}
+      <Sheet open={contact} onClose={() => setContact(false)}>
+        <div className="flex flex-col gap-4 px-6 pb-2 pt-2">
+          <WasherHead />
+          <p className="text-sm text-muted">Calls and messages go through ONGO, so your number stays private. Mike can already see your parking notes.</p>
+        </div>
+        <div className="flex flex-col gap-3 px-6 pt-4" style={{ paddingBottom: 'max(32px, env(safe-area-inset-bottom))' }}>
+          <Button lead={<Phone size={18} strokeWidth={2} />} onClick={() => { window.open('tel:+97400000000'); setContact(false) }}>Call Mike</Button>
+          <Button variant="secondary" lead={<MessageSquare size={18} strokeWidth={2} />} onClick={() => { window.open('sms:+97400000000'); setContact(false) }}>Message Mike</Button>
+        </div>
+      </Sheet>
     </Screen>
+  )
+}
+
+/* Scheduled ("Wash later") booking, before a washer is assigned */
+function UpcomingCard() {
+  const navigate = useNavigate()
+  const { state, primaryCar } = useStore()
+  const b = state.booking!
+  const place = placeById(b.location)
+  const total = b.total ?? quote(b.service, b.addons, primaryCar?.type).total
+  return (
+    <div className="flex flex-col gap-4">
+      <h2 className="text-[28px] font-bold leading-none">Upcoming wash</h2>
+      <div className="flex flex-col gap-4 rounded-lg border border-line p-4">
+        <div className="flex items-center justify-between">
+          <p className="flex items-center gap-2 font-bold"><CalendarClock size={18} strokeWidth={2} />{b.when}</p>
+          <Badge>Booked</Badge>
+        </div>
+        <div className="flex flex-col gap-2 text-sm">
+          <p className="flex items-center gap-2"><MapPin size={16} strokeWidth={2} className="shrink-0" />{place?.name ?? 'Your location'}</p>
+          <p className="text-muted">{serviceById(b.service).listName} wash · {primaryCar ? carSummary(primaryCar) : ''}</p>
+          <p className="text-muted">{total} QAR on hold · charged after the wash</p>
+        </div>
+        <p className="rounded-md bg-bg-2 px-3 py-2 text-sm">We’ll assign your washer 30 minutes before. Free cancellation until 1 hour before your wash.</p>
+        <Button variant="danger" size="md" onClick={() => navigate('/book/cancel')}>Cancel booking</Button>
+      </div>
+    </div>
   )
 }
 
@@ -151,7 +193,7 @@ export function BookingsRecent() {
       <TitleHeader title="Bookings" />
       <BookingTabs value="recent" />
       {state.recent.length === 0 ? (
-        <EmptyState image={illCar} title="No recent bookings" body="Once you book a car wash, it will appear here. You can track its status and view past washes anytime.">
+        <EmptyState image={illCar} title="No recent bookings" body="Finished washes and their receipts will show up here.">
           <Button onClick={() => navigate('/book')}>Book a wash</Button>
         </EmptyState>
       ) : (
@@ -160,22 +202,25 @@ export function BookingsRecent() {
             {state.recent.map((r, i) => {
               const s = serviceById(r.service)
               return (
-                <motion.button
+                <motion.div
                   key={r.id}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04, duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
-                  onClick={() => { set((st) => ({ draft: { ...st.draft, service: r.service } })); navigate('/book?step=service') }}
-                  className="flex min-h-20 w-full items-center gap-2 rounded-lg bg-bg py-3 pl-2 pr-4 text-left shadow-[inset_0_0_0_1px_var(--color-line)] transition-transform active:scale-[0.985]"
+                  className="relative flex min-h-20 w-full items-center rounded-lg bg-bg shadow-[inset_0_0_0_1px_var(--color-line)]"
                 >
-                  <img src={s.icon} alt="" width={56} height={56} className="size-14 object-contain" />
-                  <span className="flex min-w-0 flex-1 flex-col gap-2">
-                    <span className="font-bold leading-none">{s.listName}</span>
-                    <span className="text-sm leading-snug text-muted">{r.when && r.car ? `${r.when} · ${r.car}` : s.duration}</span>
-                  </span>
-                  <span className="text-sm">{s.price} QAR</span>
-                  <RefreshCcw size={22} strokeWidth={1.75} aria-label="Book again" className="ml-2" />
-                </motion.button>
+                  <button onClick={() => navigate(`/receipt/${r.id}`)} className="flex min-w-0 flex-1 items-center gap-2 py-3 pl-2 pr-1 text-left transition-transform active:scale-[0.985]">
+                    <img src={s.icon} alt="" width={56} height={56} className="size-14 object-contain" />
+                    <span className="flex min-w-0 flex-1 flex-col gap-2">
+                      <span className="font-bold leading-none">{s.listName}</span>
+                      <span className="text-sm leading-snug text-muted">{r.when && r.car ? `${r.when} · ${r.car}` : s.duration}</span>
+                    </span>
+                    <span className="tabular text-sm">{r.total ?? s.price} QAR</span>
+                  </button>
+                  <button aria-label={`Book ${s.listName} again`} onClick={() => { set((st) => ({ draft: { ...st.draft, service: r.service, addons: r.addons ?? [], when: null } })); navigate('/book?step=search') }} className="flex size-11 shrink-0 items-center justify-center mr-2">
+                    <RefreshCcw size={22} strokeWidth={1.75} />
+                  </button>
+                </motion.div>
               )
             })}
           </div>
@@ -190,10 +235,27 @@ export function BookingsRecent() {
 export function Rate() {
   const navigate = useNavigate()
   const { set } = useStore()
-  const [stars, setStars] = useState(4)
-  const [tags, setTags] = useState<string[]>(['Spotless', 'On time'])
+  const [stars, setStars] = useState(0)
+  const [tags, setTags] = useState<string[]>([])
+  const { primaryCar } = useStore()
+  // Move the finished booking into history with everything the receipt needs
   const finish = () => {
-    set((s) => ({ recent: s.booking ? [{ id: uid(), service: s.booking.service }, ...s.recent] : s.recent, booking: null }))
+    const id = uid()
+    set((s) => {
+      const b = s.booking
+      if (!b) return {}
+      const car = s.cars.find((c) => c.id === b.carId) ?? primaryCar
+      const pay = s.payments.find((p) => p.id === b.paymentId) ?? s.payments[0]
+      return {
+        booking: null,
+        recent: [{
+          id, service: b.service, addons: b.addons, total: b.total ?? quote(b.service, b.addons, car?.type).total,
+          when: `Today, ${clock(Date.now())}`, car: car?.name, carType: car ? carSummary(car) : undefined,
+          location: placeById(b.location)?.name, payment: pay ? `${pay.label}${pay.last4 ? ` •••• ${pay.last4}` : ''}` : undefined,
+        }, ...s.recent],
+      }
+    })
+    return id
   }
   return (
     <Screen>
@@ -211,7 +273,7 @@ export function Rate() {
                 </motion.button>
               ))}
             </div>
-            <p className="text-sm text-muted">What went well?</p>
+            <p className="text-sm text-muted">What stood out?</p>
             <div className="flex flex-wrap gap-2">
               {FEEDBACK_TAGS.map((t) => {
                 const on = tags.includes(t)
@@ -227,7 +289,7 @@ export function Rate() {
                 <span className={inputBox}><input placeholder="Tell us more about your wash…" className="w-full bg-transparent outline-none placeholder:text-muted" /></span>
               </Field>
             </div>
-            <Button size="md" onClick={() => { finish(); navigate('/rate/thanks', { replace: true }) }}>Submit rating</Button>
+            <Button size="md" disabled={!stars} onClick={() => { const id = finish(); navigate('/rate/thanks', { replace: true, state: { receipt: id } }) }}>{stars ? 'Submit rating' : 'Tap a star to rate'}</Button>
             <Button size="md" variant="tertiary" onClick={() => { finish(); navigate('/home', { replace: true }) }}>Skip</Button>
             <p className="text-center text-[13px] leading-[1.5] text-muted-2">Your feedback is shared with Mike and helps us keep every wash spotless.</p>
           </div>
@@ -239,12 +301,14 @@ export function Rate() {
 
 export function Thanks() {
   const navigate = useNavigate()
+  const receipt = (useLocation().state as { receipt?: string } | null)?.receipt
   return (
     <Screen>
       <StatusBar tall />
       <TitleHeader title="Feedback" />
       <EmptyState image={illThumbs} title="Thanks for rating Mike!" body="Your feedback was shared. We use every rating to keep washes spotless and on time.">
         <Button onClick={() => navigate('/book?step=search', { replace: true })}>Book again</Button>
+        {receipt && <Button variant="secondary" onClick={() => navigate(`/receipt/${receipt}`)}>View receipt</Button>}
         <Button variant="tertiary" onClick={() => navigate('/home', { replace: true })}>Back to home</Button>
       </EmptyState>
       <BottomNav />

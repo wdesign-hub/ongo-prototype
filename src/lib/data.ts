@@ -25,37 +25,38 @@ export type Service = {
   listName: string       // name in "Choose a service" sheet
   detailName: string     // name in "Car wash details"
   duration: string
-  price: number | null
+  price: number | null      // sedan
+  suvPrice: number | null   // SUV · 5 or 7 seats
   icon: string
   recommended?: boolean
   features: string[]
   detailFeatures: string[]
 }
 
-// Fixed sedan pricing (SUV: 55 / 85 / 160 QAR — not shown in the designs yet)
+// Fixed pricing from the business: sedan / SUV
 export const SERVICES: Service[] = [
   {
-    id: 'express', tab: 'Express', title: 'Express Wash', listName: 'Express', detailName: 'Express',
-    duration: '25–35 min', price: 45, icon: clock3d, recommended: true,
+    id: 'express', tab: 'Express', title: 'Express wash', listName: 'Express', detailName: 'Express',
+    duration: '25–35 min', price: 45, suvPrice: 55, icon: clock3d, recommended: true,
     features: ['Exterior wash', 'Interior vacuum', 'Dashboard wipe', 'Tyre cleaning'],
     detailFeatures: ['Exterior wash', 'Interior vacuum', 'Dashboard wipe', 'Tyre cleaning'],
   },
   {
-    id: 'shine', tab: 'Shine', title: 'Shine', listName: 'Shine', detailName: 'Shine',
-    duration: '40–60 min', price: 70, icon: car3d,
+    id: 'shine', tab: 'Shine', title: 'Shine wash', listName: 'Shine', detailName: 'Shine',
+    duration: '40–60 min', price: 70, suvPrice: 85, icon: car3d,
     features: ['Everything in Express', 'Wax shampoo', 'Interior shine', 'Tyre shine'],
     detailFeatures: ['Everything in Express', 'Wax shampoo', 'Interior shine', 'Tyre shine'],
   },
   {
-    id: 'detailed', tab: 'Detailed', title: 'Detailed Wash', listName: 'Detailed', detailName: 'Detailed',
-    duration: '60–90 min', price: 120, icon: wheel3d,
+    id: 'detailed', tab: 'Detailed', title: 'Detailed wash', listName: 'Detailed', detailName: 'Detailed',
+    duration: '60–90 min', price: 120, suvPrice: 160, icon: wheel3d,
     features: ['Everything in Shine', 'Deep interior cleaning & upholstery', 'Light polish / wax', 'Rim detailing'],
     detailFeatures: ['Everything in Shine', 'Deep interior cleaning & upholstery', 'Light polish / wax', 'Rim detailing'],
   },
   {
-    id: 'custom', tab: 'Custom', title: 'Custom', listName: 'Custom', detailName: 'Custom',
-    duration: 'Time varies', price: null, icon: cube3d,
-    features: ['Everything in Express, plus add-ons', 'Build your own package'],
+    id: 'custom', tab: 'Custom', title: 'Custom wash', listName: 'Custom', detailName: 'Custom',
+    duration: 'Depends on add-ons', price: null, suvPrice: null, icon: cube3d,
+    features: ['Everything in Express, plus add-ons', 'Pick only the extras you need'],
     detailFeatures: ['Everything in Express, plus add-ons'],
   },
 ]
@@ -65,16 +66,17 @@ export const SERVICE_LIST_ORDER: ServiceId[] = ['express', 'shine', 'detailed', 
 
 export const serviceById = (id: ServiceId) => SERVICES.find((s) => s.id === id)!
 
+// Add-on prices are PLACEHOLDERS until the business confirms them.
 export const ADDONS = [
-  { id: 'interior-polish', label: 'Interior polish / shampoo', icon: svcCarFront },
-  { id: 'interior-clean', label: 'Interior clean', icon: svcSparkles },
-  { id: 'wax', label: 'Wax & seal', icon: svcWax },
-  { id: 'tire', label: 'Tyre shine', icon: svcWheels },
-  { id: 'engine', label: 'Engine cleaning', icon: svcWrench },
-  { id: 'headlights', label: 'Headlights', icon: svcSun },
-  { id: 'pet', label: 'Pet hair removal', icon: svcDog },
-  { id: 'paint', label: 'Paint polishing', icon: svcSprayCan },
-  { id: 'ac', label: 'AC steam cleaning', icon: svcThermo },
+  { id: 'interior-polish', label: 'Interior polish / shampoo', icon: svcCarFront, price: 40 },
+  { id: 'interior-clean', label: 'Interior clean', icon: svcSparkles, price: 25 },
+  { id: 'wax', label: 'Wax & seal', icon: svcWax, price: 30 },
+  { id: 'tire', label: 'Tyre shine', icon: svcWheels, price: 10 },
+  { id: 'engine', label: 'Engine cleaning', icon: svcWrench, price: 35 },
+  { id: 'headlights', label: 'Headlights', icon: svcSun, price: 20 },
+  { id: 'pet', label: 'Pet hair removal', icon: svcDog, price: 25 },
+  { id: 'paint', label: 'Paint polishing', icon: svcSprayCan, price: 60 },
+  { id: 'ac', label: 'AC steam cleaning', icon: svcThermo, price: 45 },
 ]
 
 export type CarType = 'Sedan' | 'SUV · 5 seats' | 'SUV · 7 seats'
@@ -140,12 +142,34 @@ export const NOTIFICATIONS = [
   { id: 'n3', icon: 'pin' as const, title: 'Run ONGO Run', body: 'Join us for a run at Mall of Qatar at 7 AM. Wear your favourite running shoes.' },
 ]
 
-// Washer tracking timeline (Bookings 1.0 / 1.1)
+// Washer tracking timeline (Bookings 1.0 / 1.1). `at` = minutes after booking; shown as real clock times.
 export const TIMELINE = [
-  { title: 'Booking confirmed', time: '12:04' },
-  { title: 'Washer assigned', time: '1:48', sub: 'Mike Mohammad · Van Q8812' },
-  { title: 'On the way', time: '2:11', sub: 'Left Al Sadd · 14 min away' },
-  { title: 'Arrived & locating your car', time: '~2:30' },
-  { title: 'Wash in progress', time: '~2:32' },
-  { title: 'Wash complete' },
+  { title: 'Booking confirmed', at: 0 },
+  { title: 'Washer assigned', at: 2, sub: 'Mike Mohammad · Van Q8812' },
+  { title: 'On the way', at: 4, sub: 'Left Al Sadd · 14 min away' },
+  { title: 'Arrived and finding your car', at: 18 },
+  { title: 'Wash in progress', at: 20 },
+  { title: 'Wash complete', at: 75 },
 ]
+
+/* ---------- Pricing ---------- */
+export const isSuv = (type?: string | null) => !!type && type.startsWith('SUV')
+/** Custom = Express base + add-ons */
+export function servicePrice(id: ServiceId, type?: string | null): number {
+  const s = serviceById(id === 'custom' ? 'express' : id)
+  return (isSuv(type) ? s.suvPrice : s.price) ?? 0
+}
+export type QuoteLine = { label: string; sub?: string; amount: number }
+export function quote(service: ServiceId, addons: string[], type?: string | null) {
+  const s = serviceById(service)
+  const lines: QuoteLine[] = [{
+    label: service === 'custom' ? 'Express wash (Custom base)' : `${s.listName} wash`,
+    sub: isSuv(type) ? 'SUV price' : 'Sedan price',
+    amount: servicePrice(service, type),
+  }]
+  if (service === 'custom') for (const id of addons) { const a = ADDONS.find((x) => x.id === id); if (a) lines.push({ label: a.label, amount: a.price }) }
+  return { lines, total: lines.reduce((n, l) => n + l.amount, 0) }
+}
+export const ALL_PLACES = [...LOCATIONS, ...PIN_AREAS]
+export const placeById = (id: string | null | undefined) => ALL_PLACES.find((l) => l.id === id) ?? null
+export const clock = (t: number) => new Date(t).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
